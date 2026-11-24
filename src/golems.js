@@ -1,9 +1,9 @@
 import { reactive } from 'vue'
-import { exits, placeById } from './map.js'
-import { resources } from './resources.js'
+import { exits, placeById, canTravel } from './map.js'
+import { resources, ropewayOpen, fillTrough, collectRune } from './resources.js'
 
 export const fleet = reactive([])
-export const capacity = 3
+export const capacity = 5
 export const digits = ['无', '水', '土', '气', '火']
 export const hauling = ['水水', '水水', '土水', '水水', '水土', '土水']
 
@@ -61,6 +61,11 @@ export function installDraft(golem) {
 }
 
 function interact(golem, slot) {
+  if (golem.location === 'mine' && slot === 2n) {
+    if (ropewayOpen.value) return { error: '索道已通，水槽已满。' }
+    if (!fillTrough(golem.cargo, 1)) return { error: '货舱里没有水符文。' }
+    return { message: ropewayOpen.value ? '水轮转动，通往旧窑场的索道已开启。' : '已向索道水槽投入一枚水符文。' }
+  }
   if (slot !== 1n) return { error: '这里没有这个编号的交互点。' }
   if (golem.location === 'workshop') {
     if (!golem.cargo.length) return { error: '货舱已空，无法卸货。' }
@@ -70,24 +75,31 @@ function interact(golem, slot) {
   }
   const rune = placeById[golem.location].rune
   if (!rune) return { error: '这里没有采集或卸货设施。' }
-  if (golem.cargo.length >= capacity) return { error: '货舱已满，需回工坊卸货。' }
-  golem.cargo.push(rune)
+  if (golem.cargo.length >= capacity) return { error: '货舱已满，请先卸货。' }
+  collectRune(golem.cargo, rune)
   return { message: '已装入 1 枚' + rune + '符文。' }
 }
 
 export function step(golem) {
   const line = golem.program[golem.pc]
   if (!line) return
+  if (resources.mana < 1n) {
+    golem.report = '魔力不足，等候冥想供能。'
+    return
+  }
   const n = operand(line)
   let outcome
   if (line[0] === '水') {
     const to = exits[golem.location][n]
-    if (to) {
+    if (to && canTravel(golem.location, to)) {
       golem.location = to
       outcome = { message: '已抵达' + placeById[to].label + '。' }
-    } else outcome = { error: '此处没有 ' + n + ' 号出口。' }
+    } else outcome = { error: to ? '索道尚未修复。' : '此处没有 ' + n + ' 号出口。' }
   } else outcome = interact(golem, n)
   golem.report = '第 ' + (golem.pc + 1) + ' 行 · ' + (outcome.error ?? outcome.message)
   if (outcome.error) golem.running = false
-  else golem.pc = (golem.pc + 1) % golem.program.length
+  else {
+    resources.mana--
+    golem.pc = (golem.pc + 1) % golem.program.length
+  }
 }

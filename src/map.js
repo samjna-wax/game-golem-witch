@@ -3,10 +3,12 @@ import courtyardImage from './assets/courtyard.webp'
 import workshopImage from './assets/workshop.webp'
 import mineImage from './assets/mine.webp'
 
+import { ropewayOpen } from './resources.js'
+
 export const places = [
   {
     id: 'room', parent: 'manor', label: '房间', title: '魔女的房间',
-    image: roomImage, feature: '阁楼书桌', action: '提炼魔力',
+    image: roomImage, feature: '阁楼书桌',
   },
   {
     id: 'courtyard', parent: 'manor', label: '庭院', title: '庭院',
@@ -24,6 +26,10 @@ export const places = [
     id: 'mine', label: '矿山', title: '附近的矿山',
     image: mineImage, feature: '矿脉采集点', action: '采集土符文', rune: '土',
   },
+  {
+    id: 'kiln', label: '旧窑场', title: '对岸的旧窑场',
+    image: workshopImage, feature: '窑底余烬', action: '拾取火符文', rune: '火',
+  },
 ]
 
 export const manor = { id: 'manor', label: '魔女宅邸', entrance: 'gate' }
@@ -32,7 +38,7 @@ export const manor = { id: 'manor', label: '魔女宅邸', entrance: 'gate' }
 const roads = [
   ['room', 1, 'courtyard', 2], ['room', 2, 'gate', 3], ['courtyard', 3, 'gate', 4],
   ['room', 3, 'workshop', 3], ['courtyard', 1, 'workshop', 2], ['gate', 2, 'workshop', 1],
-  ['manor', 1, 'mine', 1],
+  ['manor', 1, 'mine', 1], ['mine', 2, 'kiln', 1],
 ]
 
 export const paths = roads.map(([a, , b]) => [a, b])
@@ -48,5 +54,5 @@ export function arrival(id) {
 }
 
 export function canTravel(from, to) {
-  return Object.values(exits[from]).includes(arrival(to))
+  return (to !== 'kiln' || ropewayOpen.value) && Object.values(exits[from]).includes(arrival(to))
 }

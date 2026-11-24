@@ -238,3 +238,15 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 .glyph-choice { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-left: 12px; }
 .hint { font-size: 14px; color: #d1c1b4; }
 .installed summary { cursor: pointer; padding-block: 10px; min-height: 44px; }
+
+.pack, .station {
+  flex-basis: 100%; display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center;
+}
+.pack { padding-block: 8px; border-block: 1px solid #68575c; }
+.pack span, .station small, .workbench > small { color: #ddc9b8; }
+.trough { display: grid; gap: 8px; }
+.trough h2, .trough p, .trough .board-head { margin: 0; }
+.trough h2 { font-size: 19px; }
+.trough progress { width: 100%; accent-color: #83b5c0; }
+.map-track line.closed { stroke-dasharray: 4 4; opacity: .6; }
+.discovery { color: #f6ca91; margin: 0; }

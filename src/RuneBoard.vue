@@ -1,11 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { resources } from './resources.js'
+import { resources, ropeway, ropewayOpen, troughGoal } from './resources.js'
 import { exits, placeById } from './map.js'
 import { fleet, capacity, operand, step } from './golems.js'
 
 import RuneEditor from './RuneEditor.vue'
 
+defineProps({ returnLabel: String })
 defineEmits(['close'])
 const iconMode = ref(true)
 const id = ref(1)
@@ -17,7 +18,6 @@ function chooseMachine() {
 function start() {
   const g = machine.value
   g.running = true
-  step(g)
 }
 </script>
 
@@ -25,7 +25,7 @@ function start() {
   <article class="board" :class="{ 'icon-mode': iconMode }">
     <header class="board-head">
       <h1>符文板</h1>
-      <button type="button" @click="$emit('close')">返回工坊</button>
+      <button type="button" @click="$emit('close')">{{ returnLabel }}</button>
     </header>
     <label>哥雷姆
       <select v-model="id" @change="chooseMachine">
@@ -37,10 +37,12 @@ function start() {
     <section class="readout" aria-label="哥雷姆状态">
       <strong>{{ placeById[machine.location].title }}</strong>
       <span>货舱 {{ machine.cargo.length }}/{{ capacity }} · {{ machine.cargo.join('、') || '空' }}</span>
-      <p>出口 <span v-for="(to, n) in exits[machine.location]" :key="n">{{ n }} {{ placeById[to].label }}　</span></p>
+      <p>出口 <span v-for="(to, n) in exits[machine.location]" :key="n">{{ n }} {{ placeById[to].label }}{{ to === 'kiln' && !ropewayOpen ? '（停运）' : '' }}　</span></p>
       <p v-if="machine.location === 'workshop' || placeById[machine.location].rune">
         交互点 1 · {{ machine.location === 'workshop' ? '收货台' : placeById[machine.location].feature }}
       </p>
+      <p v-if="machine.location === 'mine'">交互点 2 · 索道水槽 {{ ropeway.water }}/{{ troughGoal }}</p>
+      <p>魔力 {{ resources.mana }} · 每步消耗 1</p>
       <p>库存 · 土 {{ resources.runes.土 }}　水 {{ resources.runes.水 }}</p>
     </section>
 
