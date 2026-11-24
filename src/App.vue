@@ -8,7 +8,8 @@ import NearbyMap from './NearbyMap.vue'
 import RuneBoard from './RuneBoard.vue'
 import { fleet, step } from './golems.js'
 
-const editing = ref(false)
+const props = defineProps({ openEditor: Boolean })
+const editing = ref(props.openEditor)
 let clock
 onMounted(() => {
   clock = setInterval(() => {
@@ -17,7 +18,7 @@ onMounted(() => {
 })
 onUnmounted(() => clearInterval(clock))
 
-const location = ref('room')
+const location = ref(props.openEditor ? 'workshop' : 'room')
 const current = computed(() => places.find(place => place.id === location.value))
 
 function travel(destination) {

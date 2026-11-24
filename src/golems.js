@@ -9,7 +9,7 @@ export const hauling = ['水水', '水水', '土水', '水水', '水土', '土�
 
 export function newGolem() {
   fleet.push({
-    id: fleet.length + 1, location: 'workshop', cargo: [], program: [],
+    id: fleet.length + 1, location: 'workshop', cargo: [], program: [], draft: '',
     pc: 0, running: false, report: '等待装入符文。',
   })
 }
@@ -28,25 +28,36 @@ export function runeCost(lines) {
   return cost
 }
 
-export function affordable(lines) {
-  return Object.entries(runeCost(lines)).every(([rune, n]) => (resources.runes[rune] ?? 0n) >= n)
+export function installation(golem) {
+  const lines = golem.draft.split('\n')
+  // A final newline is a line terminator. Interior empty lines need instructions.
+  if (lines.at(-1) === '') lines.pop()
+  const invalid = lines.findIndex(line => !/^[水土][无水土气火]+$/u.test(line))
+  if (invalid !== -1) return { error: '第 ' + (invalid + 1) + ' 行需要水或土开头，并跟至少一枚数值符文。' }
+
+  const old = runeCost(golem.program)
+  const cost = runeCost(lines)
+  const changes = []
+  const missing = []
+  for (const rune of digits) {
+    const delta = (cost[rune] ?? 0n) - (old[rune] ?? 0n)
+    if (!delta) continue
+    changes.push({ rune, delta })
+    const shortage = delta - (resources.runes[rune] ?? 0n)
+    if (shortage > 0n) missing.push(rune + ' ' + shortage)
+  }
+  const changed = lines.length !== golem.program.length || lines.some((line, i) => line !== golem.program[i])
+  return { lines, changes, changed, error: missing.length ? '还缺：' + missing.join('、') : '' }
 }
 
-export function insertLines(golem, index, lines) {
-  if (golem.running || !lines.length || !lines.every(line => /^[水土][无水土气火]+$/u.test(line)) || !affordable(lines)) return false
-  for (const [rune, n] of Object.entries(runeCost(lines))) resources.runes[rune] -= n
-  golem.program.splice(index, 0, ...lines)
+export function installDraft(golem) {
+  const plan = installation(golem)
+  if (plan.error || !plan.changed) return
+  for (const { rune, delta } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta
+  golem.running = false
+  golem.program = plan.lines
   golem.pc = 0
-  golem.report = '符文已装入。'
-  return true
-}
-
-export function removeLine(golem, index) {
-  if (golem.running || !golem.program[index]) return
-  const [line] = golem.program.splice(index, 1)
-  for (const rune of line) resources.runes[rune]++
-  golem.pc = Math.min(index, Math.max(golem.program.length - 1, 0))
-  golem.report = '该行符文已归还。'
+  golem.report = plan.lines.length ? '新程序已装入，准备从首行执行。' : '程序已卸下，符文已归还。'
 }
 
 function interact(golem, slot) {

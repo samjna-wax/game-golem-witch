@@ -194,7 +194,7 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 .board select { margin-left: 8px; }
 .board-head, .tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .board-head { justify-content: space-between; margin-bottom: 12px; }
-.readout, .example, .composer { background: #352e34; padding: 12px; margin: 12px 0; }
+.readout { background: #352e34; padding: 12px; margin: 12px 0; }
 .readout strong { margin-right: 1em; }
 .board p { margin: 6px 0; line-height: 1.5; }
 .program { list-style: none; padding: 0; margin: 8px 0; }
@@ -203,9 +203,35 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 .program small { color: #e8c995; }
 .board button[aria-pressed=true] { border-color: #e4bc81; background: #564634; color: #fff5df; }
 .board button:disabled { opacity: .58; cursor: default; }
-.composer summary { cursor: pointer; min-height: 44px; line-height: 44px; }
-.composer fieldset { margin: 8px 0; padding: 6px; border: 1px solid #695b63; }
-.composer fieldset button { margin: 2px; }
-.draft { overflow-wrap: anywhere; }
-.example small { display: block; margin-top: 6px; }
 .message { color: #eed9b5; }
+
+.rune-editor { margin: 16px 0 22px; }
+.editor-paper {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); overflow: hidden;
+  height: clamp(140px, 31svh, 320px); border: 1px solid #776456; border-radius: 4px;
+}
+.gutter, .editor-paper textarea {
+  margin: 0; padding: 0; border: 0; height: 100%; min-height: 0; overflow: auto;
+  box-sizing: border-box; overscroll-behavior: contain;
+}
+.gutter { background: #352e34; scrollbar-width: none; }
+.gutter button {
+  display: block; background: transparent; color: #cbb9ad; width: 100%;
+  height: 44px; padding: 0; border: 0; border-radius: 0; font-variant-numeric: tabular-nums;
+}
+.editor-paper textarea {
+  background: #211d23; color: #fff1d8; border-radius: 0; resize: none; padding-inline: 10px;
+  font: 22px/44px 'Songti SC', serif; letter-spacing: .2em; caret-color: #ffe3a6;
+}
+.editor-paper textarea:focus-visible { outline: 1px solid #d9b894; outline-offset: -1px; }
+.rune-editor .translation { color: #f2dcaa; overflow-wrap: anywhere; }
+.key-row { display: grid; gap: 3px; margin: 3px 0; }
+.symbols { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.editing { grid-template-columns: 1fr 1fr 1.15fr 1.9fr 1.15fr; }
+.key-row button, .clip button { padding: 0 2px; font-size: 14px; }
+.symbols button { gap: 3px; font-size: 16px; }
+.symbols small { font: 11px Georgia, serif; opacity: .75; }
+.editing button, .clip button { background: #453b43; color: #f3e8dc; }
+.clip button { flex: 1; }
+.hint { font-size: 14px; color: #d1c1b4; }
+.installed summary { cursor: pointer; padding-block: 10px; min-height: 44px; }
