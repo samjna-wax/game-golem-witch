@@ -7,6 +7,7 @@ import { fleet, capacity, operand, step } from './golems.js'
 import RuneEditor from './RuneEditor.vue'
 
 defineEmits(['close'])
+const iconMode = ref(true)
 const id = ref(1)
 const machine = computed(() => fleet[id.value - 1])
 const selected = ref(null)
@@ -21,7 +22,7 @@ function start() {
 </script>
 
 <template>
-  <article class="board">
+  <article class="board" :class="{ 'icon-mode': iconMode }">
     <header class="board-head">
       <h1>符文板</h1>
       <button type="button" @click="$emit('close')">返回工坊</button>
@@ -31,6 +32,7 @@ function start() {
         <option v-for="g in fleet" :key="g.id" :value="g.id">{{ g.id }} 号</option>
       </select>
     </label>
+    <label class="glyph-choice"><input type="checkbox" v-model="iconMode">符文图标</label>
     <RuneEditor :key="machine.id" :machine="machine" @installed="selected = null" />
     <section class="readout" aria-label="哥雷姆状态">
       <strong>{{ placeById[machine.location].title }}</strong>
@@ -48,7 +50,7 @@ function start() {
       <ol class="program">
         <li v-for="(line, i) in machine.program" :key="i">
           <button :aria-pressed="i === selected" @click="selected = i">
-            <span>{{ i + 1 }}</span><b>{{ line }}</b>
+            <span>{{ i + 1 }}</span><b class="rune-ink">{{ line }}</b>
             <span>{{ line[0] === '水' ? '出口' : '交互点' }} {{ operand(line) }}</span>
             <small v-if="i === machine.pc">下一行</small>
           </button>
