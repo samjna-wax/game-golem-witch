@@ -146,8 +146,15 @@ button {
   touch-action: manipulation;
 }
 
-.gather:hover { background: #f4e5d5; }
-.gather:active { background: #d6c1c9; transform: translateY(1px); }
+.forge {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px 16px; border-top: 1px solid #68575c; padding-top: 10px;
+}
+.recipe p { margin: 0 0 4px; color: #ddc9b8; font-size: 14px; }
+.recipe output { color: #eee1ff; }
+.gather:disabled { background: #413a40; border-color: #71616c; color: #c8bac5; cursor: default; }
+.gather:enabled:hover { background: #f4e5d5; }
+.gather:enabled:active { background: #d6c1c9; transform: translateY(1px); }
 button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 .yield { padding-left: 14px; border-left: 1px solid #ae938e; font-family: Georgia, serif; }
 
@@ -166,4 +173,10 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
   }
   .runes { grid-column: 1 / -1; grid-row: 2; }
   .gather { gap: 10px; padding-inline: 14px; }
+}
+
+@media (max-width: 500px) and (max-height: 650px) {
+  .balance, .runes { display: flex; align-items: baseline; gap: 10px; }
+  .runes dl { flex: 1; }
+  .resources output, .runes dd { font-size: 22px; }
 }

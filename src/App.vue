@@ -1,4 +1,5 @@
 <script setup>
+import { canForge, forgeGolem, golemCost, golems } from './forge.js'
 import { resources } from './resources.js'
 import { computed, ref } from 'vue'
 import { places, arrival, canTravel } from './map.js'
@@ -47,6 +48,15 @@ function gather() {
           <span id="money-label">金钱</span>
           <output aria-labelledby="money-label">{{ resources.money }}</output>
         </div>
+      </section>
+      <section v-if="location === 'workshop'" class="forge" aria-label="魔力锻炉">
+        <div class="recipe">
+          <p id="forge-cost">每具消耗：魔力 {{ golemCost.mana }} · 土符文 {{ golemCost.earth }} · 水符文 {{ golemCost.water }}</p>
+          <output aria-label="已有哥雷姆">已有 {{ golems }} 具哥雷姆</output>
+        </div>
+        <button type="button" class="gather" :disabled="!canForge" aria-describedby="forge-cost" @click="forgeGolem">
+          锻造哥雷姆
+        </button>
       </section>
       <button v-if="current.action" type="button" class="gather" @click="gather">
         <span>{{ current.action }}</span>

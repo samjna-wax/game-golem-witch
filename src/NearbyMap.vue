@@ -11,7 +11,7 @@ const nodes = computed(() => expanded.value ? places : [manor, mine])
 
 // Drawing coordinates are percentages. Travel always uses the graph's edges.
 const positions = computed(() => expanded.value
-  ? { room: [15, 25], courtyard: [15, 75], gate: [50, 50], mine: [85, 50] }
+  ? { room: [15, 25], courtyard: [15, 75], workshop: [50, 75], gate: [50, 25], mine: [85, 25] }
   : { manor: [25, 50], mine: [75, 50] })
 const edges = computed(() => expanded.value
   ? paths.map(([a, b]) => [arrival(a), arrival(b)])
