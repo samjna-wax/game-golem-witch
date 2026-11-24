@@ -64,13 +64,31 @@ h1 {
   padding: clamp(18px, 3vw, 30px) clamp(20px, 4vw, 48px);
 }
 
-.reserve { display: flex; gap: 14px; align-items: baseline; }
-#mana-label { color: #ddc9b8; letter-spacing: 0.12em; }
-output {
-  color: #eee1ff;
-  font: 500 clamp(32px, 4vw, 46px)/1.1 Georgia, serif;
-  font-variant-numeric: tabular-nums;
+.resources {
+  flex: 1 1 500px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) minmax(0, 1fr);
+  gap: 16px;
 }
+
+.balance, .runes { display: grid; align-content: start; gap: 6px; }
+.resources span { color: #ddc9b8; letter-spacing: 0.12em; }
+.resources output, .runes dd {
+  color: #eee1ff;
+  font: 500 28px/1.2 Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.runes dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.runes dl > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+.runes dt { color: #d1beb1; }
+.runes dd { margin: 0; font-size: 24px; }
 
 button {
   display: inline-flex;
@@ -97,5 +115,10 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 
 @media (max-width: 500px) {
   .scene img { height: clamp(260px, 52svh, 400px); }
+  .resources {
+    flex-basis: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .runes { grid-column: 1 / -1; grid-row: 2; }
   button { gap: 10px; padding-inline: 14px; }
 }
