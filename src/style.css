@@ -28,7 +28,7 @@ body {
 .scene { position: relative; }
 .scene img {
   width: 100%;
-  height: clamp(260px, 61svh, 580px);
+  height: clamp(180px, 38svh, 380px);
   display: block;
   object-fit: cover;
   object-position: 55% 50%;
@@ -41,19 +41,48 @@ body {
   background: linear-gradient(transparent, #171219db);
 }
 
-h1 {
+.scene-caption {
   position: absolute;
   z-index: 1;
   bottom: 0;
   left: 0;
   margin: 0;
   padding: 0 clamp(20px, 4vw, 48px) clamp(16px, 3vw, 32px);
-  font-size: clamp(30px, 4vw, 56px);
+}
+.scene-caption p { margin: 4px 0 0; color: #f6e6d4; }
+h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 48px);
   font-weight: 500;
   letter-spacing: 0.1em;
   text-shadow: 0 2px 8px #18121c;
 }
 
+.map { padding: 14px clamp(16px, 4vw, 48px) 16px; }
+.map h2 { margin: 0 0 9px; color: #ddc9b8; font-size: 15px; font-weight: 500; }
+.map-track { display: grid; align-items: center; }
+.path {
+  grid-row: 1;
+  height: 2px;
+  background: #ad9886;
+  margin-inline: 25%;
+}
+.place {
+  grid-row: 1;
+  z-index: 1;
+  justify-self: center;
+  display: grid;
+  gap: 1px;
+  padding: 5px 8px;
+  min-width: min(70px, 100%);
+  background: #473c42;
+  color: #fbe9da;
+}
+.place small { font-size: 12px; }
+.place[aria-current] { color: #fff1d8; background: #584636; border-color: #e4bc81; }
+.place:disabled { cursor: default; }
+.place:disabled:not([aria-current]) { background: #302b30; border-color: #6d6065; color: #bcafb5; }
+.place:enabled:hover { background: #5b4a53; }
 .workbench {
   display: flex;
   align-items: center;
@@ -108,17 +137,22 @@ button {
   touch-action: manipulation;
 }
 
-button:hover { background: #f4e5d5; }
-button:active { background: #d6c1c9; transform: translateY(1px); }
+.gather:hover { background: #f4e5d5; }
+button:enabled:active { background: #d6c1c9; transform: translateY(1px); }
 button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 .yield { padding-left: 14px; border-left: 1px solid #ae938e; font-family: Georgia, serif; }
 
 @media (max-width: 500px) {
-  .scene img { height: clamp(260px, 52svh, 400px); }
+  body { padding: 8px; }
+  .scene img { height: clamp(140px, 30svh, 240px); }
+  .workbench { padding: 12px 16px 16px; gap: 12px; }
+  .gather { width: 100%; }
+  .place { gap: 1px; }
+
   .resources {
     flex-basis: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .runes { grid-column: 1 / -1; grid-row: 2; }
-  button { gap: 10px; padding-inline: 14px; }
+  .gather { gap: 10px; padding-inline: 14px; }
 }
