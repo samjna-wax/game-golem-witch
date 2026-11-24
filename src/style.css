@@ -1,0 +1,101 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Songti SC', 'Noto Serif CJK SC', SimSun, serif;
+  color: #fbefdf;
+  background: #17151b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 4vw, 64px);
+  background: radial-gradient(ellipse at 50% 35%, #3c303a, #17151b 72%);
+}
+
+#app { width: min(100%, 1080px); }
+
+.room {
+  overflow: hidden;
+  border: 1px solid #776456;
+  background: #282329;
+  box-shadow: 0 18px 72px #08070b80;
+}
+
+.scene { position: relative; }
+.scene img {
+  width: 100%;
+  height: clamp(260px, 61svh, 580px);
+  display: block;
+  object-fit: cover;
+  object-position: 55% 50%;
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 0;
+  background: linear-gradient(transparent, #171219db);
+}
+
+h1 {
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  padding: 0 clamp(20px, 4vw, 48px) clamp(16px, 3vw, 32px);
+  font-size: clamp(30px, 4vw, 56px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 8px #18121c;
+}
+
+.workbench {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  border-top: 1px solid #806a59;
+  padding: clamp(18px, 3vw, 30px) clamp(20px, 4vw, 48px);
+}
+
+.reserve { display: flex; gap: 14px; align-items: baseline; }
+#mana-label { color: #ddc9b8; letter-spacing: 0.12em; }
+output {
+  color: #eee1ff;
+  font: 500 clamp(32px, 4vw, 46px)/1.1 Georgia, serif;
+  font-variant-numeric: tabular-nums;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 48px;
+  padding: 10px 20px;
+  border: 1px solid #c7a99a;
+  border-radius: 3px;
+  background: #e7d6c5;
+  color: #342530;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:hover { background: #f4e5d5; }
+button:active { background: #d6c1c9; transform: translateY(1px); }
+button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
+.yield { padding-left: 14px; border-left: 1px solid #ae938e; font-family: Georgia, serif; }
+
+@media (max-width: 500px) {
+  .scene img { height: clamp(260px, 52svh, 400px); }
+  button { gap: 10px; padding-inline: 14px; }
+}
