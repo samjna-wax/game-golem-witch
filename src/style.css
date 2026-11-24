@@ -180,3 +180,32 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
   .runes dl { flex: 1; }
   .resources output, .runes dd { font-size: 22px; }
 }
+
+.machine-marker {
+  position: absolute; right: -6px; top: -8px; border-radius: 8px;
+  padding: 0 4px; background: #dfc698; color: #342530; font: 12px/17px system-ui;
+}
+.board { margin: auto; max-width: 680px; padding: clamp(14px, 3vw, 32px); }
+.board h1 { font-size: 28px; }
+.board h2 { margin: 0; font-size: 20px; }
+.board button, .board select {
+  font: inherit; font-size: 15px; padding: 6px 12px; min-height: 44px;
+}
+.board select { margin-left: 8px; }
+.board-head, .tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.board-head { justify-content: space-between; margin-bottom: 12px; }
+.readout, .example, .composer { background: #352e34; padding: 12px; margin: 12px 0; }
+.readout strong { margin-right: 1em; }
+.board p { margin: 6px 0; line-height: 1.5; }
+.program { list-style: none; padding: 0; margin: 8px 0; }
+.program li button { width: 100%; display: grid; gap: 6px; grid-template-columns: 2ch 1fr auto 3em; text-align: left; background: #3c333b; color: #eee1ff; border-color: #67596b; }
+.program b { overflow-wrap: anywhere; }
+.program small { color: #e8c995; }
+.board button[aria-pressed=true] { border-color: #e4bc81; background: #564634; color: #fff5df; }
+.board button:disabled { opacity: .58; cursor: default; }
+.composer summary { cursor: pointer; min-height: 44px; line-height: 44px; }
+.composer fieldset { margin: 8px 0; padding: 6px; border: 1px solid #695b63; }
+.composer fieldset button { margin: 2px; }
+.draft { overflow-wrap: anywhere; }
+.example small { display: block; margin-top: 6px; }
+.message { color: #eed9b5; }

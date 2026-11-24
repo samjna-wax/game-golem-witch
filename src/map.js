@@ -28,20 +28,25 @@ export const places = [
 
 export const manor = { id: 'manor', label: '魔女宅邸', entrance: 'gate' }
 
-export const paths = [
-  ['room', 'courtyard'], ['room', 'gate'], ['courtyard', 'gate'],
-  ['room', 'workshop'], ['courtyard', 'workshop'], ['gate', 'workshop'],
-  ['manor', 'mine'],
+// Each road owns two stable, local exit numbers; layout changes do not renumber them.
+const roads = [
+  ['room', 1, 'courtyard', 2], ['room', 2, 'gate', 3], ['courtyard', 3, 'gate', 4],
+  ['room', 3, 'workshop', 3], ['courtyard', 1, 'workshop', 2], ['gate', 2, 'workshop', 1],
+  ['manor', 1, 'mine', 1],
 ]
+
+export const paths = roads.map(([a, , b]) => [a, b])
+export const placeById = Object.fromEntries(places.map(place => [place.id, place]))
+export const exits = Object.fromEntries(places.map(place => [place.id, {}]))
+for (const [a, portA, b, portB] of roads) {
+  exits[arrival(a)][portA] = arrival(b)
+  exits[arrival(b)][portB] = arrival(a)
+}
 
 export function arrival(id) {
   return id === manor.id ? manor.entrance : id
 }
 
-const travelPaths = paths.map(([a, b]) => [arrival(a), arrival(b)])
-
 export function canTravel(from, to) {
-  const target = arrival(to)
-  return travelPaths.some(([a, b]) =>
-    (from === a && target === b) || (from === b && target === a))
+  return Object.values(exits[from]).includes(arrival(to))
 }

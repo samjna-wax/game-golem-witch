@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { manor, places, paths, arrival, canTravel } from './map.js'
+import { manor, places, paths, arrival, canTravel, exits } from './map.js'
+
+import { fleet } from './golems.js'
 
 const props = defineProps({ location: { type: String, required: true } })
 defineEmits(['travel'])
@@ -16,6 +18,14 @@ const positions = computed(() => expanded.value
 const edges = computed(() => expanded.value
   ? paths.map(([a, b]) => [arrival(a), arrival(b)])
   : paths.filter(pair => pair.includes(manor.id)))
+
+function exitLabel(id) {
+  const port = Object.keys(exits[props.location]).find(n => exits[props.location][n] === arrival(id))
+  return port + ' 号' + (id === manor.id ? ' · 入口' : '出口')
+}
+function machinesHere(id) {
+  return fleet.filter(g => id === manor.id ? g.location !== mine.id : g.location === id).length
+}
 
 function isHere(id) {
   return id === manor.id ? inside.value : id === props.location
@@ -45,7 +55,8 @@ function reachable(id) {
         :disabled="!reachable(node.id)" :aria-current="isHere(node.id) ? 'location' : undefined"
         @click="$emit('travel', node.id)">
         <strong>{{ node.label }}</strong>
-        <small>{{ isHere(node.id) ? '所在地' : reachable(node.id) ? (node.id === manor.id ? '前往入口' : '前往') : '未相邻' }}</small>
+        <span v-if="machinesHere(node.id)" class="machine-marker" :aria-label="machinesHere(node.id) + ' 具哥雷姆'">⚙{{ machinesHere(node.id) }}</span>
+        <small>{{ isHere(node.id) ? '所在地' : reachable(node.id) ? exitLabel(node.id) : '未相邻' }}</small>
       </button>
     </div>
   </nav>

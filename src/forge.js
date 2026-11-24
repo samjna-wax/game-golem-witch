@@ -1,7 +1,9 @@
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { resources } from './resources.js'
 
-export const golems = ref(0n)
+import { fleet, newGolem } from './golems.js'
+
+export const golems = computed(() => fleet.length)
 export const golemCost = { mana: 1n, earth: 10n, water: 5n }
 
 export const canForge = computed(() =>
@@ -15,5 +17,5 @@ export function forgeGolem() {
   resources.mana -= golemCost.mana
   resources.runes.土 -= golemCost.earth
   resources.runes.水 -= golemCost.water
-  golems.value++
+  newGolem()
 }

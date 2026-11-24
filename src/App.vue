@@ -1,9 +1,21 @@
 <script setup>
 import { canForge, forgeGolem, golemCost, golems } from './forge.js'
 import { resources } from './resources.js'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { places, arrival, canTravel } from './map.js'
 import NearbyMap from './NearbyMap.vue'
+
+import RuneBoard from './RuneBoard.vue'
+import { fleet, step } from './golems.js'
+
+const editing = ref(false)
+let clock
+onMounted(() => {
+  clock = setInterval(() => {
+    for (const g of fleet) if (g.running) step(g)
+  }, 1000)
+})
+onUnmounted(() => clearInterval(clock))
 
 const location = ref('room')
 const current = computed(() => places.find(place => place.id === location.value))
@@ -20,7 +32,8 @@ function gather() {
 </script>
 
 <template>
-  <main class="room" aria-labelledby="room-title">
+  <main v-if="editing" class="room"><RuneBoard @close="editing = false" /></main>
+  <main v-else class="room" aria-labelledby="room-title">
     <div class="scene">
       <img :src="current.image" alt="">
       <div class="scene-caption">
@@ -57,6 +70,7 @@ function gather() {
         <button type="button" class="gather" :disabled="!canForge" aria-describedby="forge-cost" @click="forgeGolem">
           锻造哥雷姆
         </button>
+        <button v-if="golems" type="button" @click="editing = true">打开符文板</button>
       </section>
       <button v-if="current.action" type="button" class="gather" @click="gather">
         <span>{{ current.action }}</span>
