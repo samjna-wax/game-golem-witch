@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 import { addresses, placeById, canTravel } from './map.js'
-import { resources, runeSpace, ropewayOpen, fillTrough, collectRune } from './resources.js'
+import { resources, manaCapacity, runeSpace, ropewayOpen, fillTrough, collectRune } from './resources.js'
 
 import { plots, feedFurnace } from './buildings.js'
 
@@ -72,17 +72,23 @@ export function installation(golem) {
     if (shortage > 0n) missing.push(rune + ' ' + shortage)
   }
   const changed = lines.length !== golem.program.length || lines.some((line, i) => line !== golem.program[i])
-  return { lines, changes, changed, error: missing.length ? '还缺：' + missing.join('、') : '' }
+  const length = lines.reduce((total, line) => total + line.length, 0)
+  const manaCost = changed ? BigInt(length) : 0n
+  if (manaCost > manaCapacity) missing.push('魔力容量 ' + (manaCost - manaCapacity) + '（上限 ' + manaCapacity + '）')
+  else if (manaCost > resources.mana) missing.push('魔力 ' + (manaCost - resources.mana))
+  return { lines, changes, changed, length, manaCost, error: missing.length ? '还缺：' + missing.join('、') : '' }
 }
 
 export function installDraft(golem) {
   const plan = installation(golem)
-  if (plan.error || !plan.changed) return
+  if (plan.error || !plan.changed) return false
+  resources.mana -= plan.manaCost
   for (const { rune, delta, overflow } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta - overflow
   golem.running = false
   golem.program = plan.lines
   golem.pc = 0
   golem.report = plan.lines.length ? '新程序已装入，准备从首行执行。' : '程序已卸下，可收纳的符文已归还。'
+  return true
 }
 
 function interact(golem, slot) {

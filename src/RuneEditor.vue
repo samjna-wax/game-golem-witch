@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { digits, hauling, installation, installDraft, operand, runeCost } from './golems.js'
 
-import { runeSpace } from './resources.js'
+import { resources, runeSpace } from './resources.js'
 
 const props = defineProps({ machine: { type: Object, required: true } })
 const emit = defineEmits(['installed', 'cleared'])
@@ -62,8 +62,7 @@ function erase() {
   if (a || b) replace(a === b ? a - 1 : a, b, '')
 }
 function install() {
-  installDraft(props.machine)
-  emit('installed')
+  if (installDraft(props.machine)) emit('installed')
 }
 </script>
 
@@ -94,6 +93,7 @@ function install() {
         <button @click="type('\n')">换行</button><button @click="erase">退格</button>
       </div>
     </div>
+    <p v-if="plan.length !== undefined" class="hint">程序 {{ plan.length }} 枚符文 · 本次装入 {{ plan.manaCost }} 魔力 · 现有 {{ resources.mana }}</p>
     <p v-if="plan.error" class="message">{{ plan.error }}</p>
     <p v-else-if="plan.changes.length" class="hint">
       <span v-for="{rune, delta, overflow} in plan.changes" :key="rune">{{ delta > 0n ? '占用' : '归还' }}{{ rune }} {{ delta > 0n ? delta : -delta - overflow }}<template v-if="overflow">（另有 {{ overflow }} 枚溢出消散）</template>　</span>

@@ -7,7 +7,7 @@ import { resources, ropeway } from './resources.js'
 const editorDemo = import.meta.env.MODE === 'editor-demo'
 if (editorDemo) {
   newGolem()
-  resources.mana = 60n
+  resources.mana = 84n // Prepay 24 runes for the sample and leave 60 mana for play.
   resources.runes.土 = 13n
   resources.runes.水 = 16n
   fleet[0].draft = hauling().join('\n')
