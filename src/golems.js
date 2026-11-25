@@ -1,12 +1,18 @@
 import { reactive } from 'vue'
-import { exits, placeById, canTravel } from './map.js'
+import { addresses, placeById, canTravel } from './map.js'
 import { resources, runeSpace, ropewayOpen, fillTrough, collectRune } from './resources.js'
+
+import { plots, feedFurnace } from './buildings.js'
 
 export const fleet = reactive([])
 export const recallCost = 10n
 export const capacity = 5
 export const digits = ['无', '水', '土', '气', '火']
-export const hauling = ['水水', '水水', '土水', '水水', '水土', '土水']
+export function hauling() {
+  const warehouse = Object.keys(plots).find(id => plots[id]?.type === 'warehouse')
+  const destination = digits[placeById[warehouse].number]
+  return ['土无', '水无', '土无', '水水', '土水', '水无', '土无', '水土', '土无', '水' + destination, '土水', '水无']
+}
 
 export function newGolem() {
   fleet.push({
@@ -39,7 +45,9 @@ export function operand(line) {
 export function runeCost(lines) {
   const cost = {}
   for (const line of lines) {
-    for (const rune of line) cost[rune] = (cost[rune] ?? 0n) + 1n
+    for (const rune of line) {
+      if (rune !== '无') cost[rune] = (cost[rune] ?? 0n) + 1n
+    }
   }
   return cost
 }
@@ -78,13 +86,23 @@ export function installDraft(golem) {
 }
 
 function interact(golem, slot) {
+  if (slot === 0n) {
+    const otherSide = placeById[golem.location].door
+    if (!otherSide) return { error: '此处没有可穿过的门。' }
+    golem.location = otherSide
+    return { message: '已穿门至' + placeById[otherSide].label + '。' }
+  }
   if (golem.location === 'mine' && slot === 2n) {
     if (ropewayOpen.value) return { error: '索道已通，水槽已满。' }
     if (!fillTrough(golem.cargo, 1)) return { error: '货舱里没有水符文。' }
     return { message: ropewayOpen.value ? '水轮转动，通往旧窑场的索道已开启。' : '已向索道水槽投入一枚水符文。' }
   }
   if (slot !== 1n) return { error: '这里没有这个编号的交互点。' }
-  if (golem.location === 'workshop') {
+  if (plots[golem.location]?.type === 'furnace') {
+    return feedFurnace(golem.location, golem.cargo)
+      ? { message: '已向炉中投入 1 枚火符文。' } : { error: '货舱里没有火符文。' }
+  }
+  if (plots[golem.location]?.type === 'warehouse') {
     if (!golem.cargo.length) return { error: '货舱已空，无法卸货。' }
     const rune = golem.cargo[0]
     if (runeSpace(rune) === 0n) return { error: rune + '符文库存已满，货物留在舱内。' }
@@ -109,11 +127,11 @@ export function step(golem) {
   const n = operand(line)
   let outcome
   if (line[0] === '水') {
-    const to = exits[golem.location][n]
+    const to = addresses[placeById[golem.location].layer][n]
     if (to && canTravel(golem.location, to)) {
       golem.location = to
       outcome = { message: '已抵达' + placeById[to].label + '。' }
-    } else outcome = { error: to ? '索道尚未修复。' : '此处没有 ' + n + ' 号出口。' }
+    } else outcome = { error: to ? '索道尚未修复。' : '此处没有 ' + n + ' 号地点。' }
   } else outcome = interact(golem, n)
   golem.report = '第 ' + (golem.pc + 1) + ' 行 · ' + (outcome.error ?? outcome.message)
   if (outcome.error) golem.running = false

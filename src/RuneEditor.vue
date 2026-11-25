@@ -19,7 +19,7 @@ const translated = computed(() => {
   const line = lines.value[current.value] ?? ''
   if (!line) return '水为移动，土为交互'
   if (!/^[水土][无水土气火]+$/u.test(line)) return '需要操作符和数值'
-  return (line[0] === '水' ? '走出口 ' : '使用交互点 ') + operand(line)
+  return (line[0] === '水' ? '前往本层地点 ' : '使用交互点 ') + operand(line)
 })
 
 // Native editing owns the text and selection while this machine is mounted.
@@ -71,7 +71,7 @@ function install() {
   <section class="rune-editor" aria-label="符文草稿">
     <div class="board-head"><h2>程序草稿</h2>
       <button v-if="machine.draft || machine.program.length" @click="clearProgram">清空并重写</button>
-      <button v-if="!machine.draft" @mousedown.prevent @click="type(hauling.join('\n'))">填入运土范例</button>
+      <button v-if="!machine.draft" @mousedown.prevent @click="type(hauling().join('\n'))">填入运土范例</button>
     </div>
     <p v-if="machine.program.length" class="hint">清空会停机并退还符文。<span v-if="clearOverflow">库存空间不足，{{ clearOverflow }} 将消散。</span></p>
     <div class="editor-paper">

@@ -2,57 +2,33 @@ import roomImage from './assets/witch-room.webp'
 import courtyardImage from './assets/courtyard.webp'
 import workshopImage from './assets/workshop.webp'
 import mineImage from './assets/mine.webp'
-
 import { ropewayOpen } from './resources.js'
+import { plots } from './buildings.js'
 
+export const layers = { manor: '魔女宅邸', outside: '宅邸外', interior: '工坊内部' }
 export const places = [
-  {
-    id: 'room', parent: 'manor', label: '房间', title: '魔女的房间',
-    image: roomImage, feature: '阁楼书桌',
-  },
-  {
-    id: 'courtyard', parent: 'manor', label: '庭院', title: '庭院',
-    image: courtyardImage, feature: '魔力之泉', action: '汲取水符文', rune: '水',
-  },
-  {
-    id: 'workshop', parent: 'manor', label: '工坊', title: '宅邸工坊',
-    image: workshopImage, feature: '魔力锻炉',
-  },
-  {
-    id: 'gate', label: '入口', parent: 'manor', title: '宅邸入口',
-    image: courtyardImage, feature: '通往矿山的小径',
-  },
-  {
-    id: 'mine', label: '矿山', title: '附近的矿山',
-    image: mineImage, feature: '矿脉采集点', action: '采集土符文', rune: '土',
-  },
-  {
-    id: 'kiln', label: '旧窑场', title: '对岸的旧窑场',
-    image: workshopImage, feature: '窑底余烬', action: '拾取火符文', rune: '火',
-  },
+  { id: 'gate', layer: 'manor', number: 0, label: '宅邸门内侧', door: 'manorDoor', image: courtyardImage },
+  { id: 'courtyard', layer: 'manor', number: 1, label: '庭院', feature: '魔力之泉', action: '汲取水符文', rune: '水', image: courtyardImage },
+  { id: 'workshopDoor', layer: 'manor', number: 2, label: '工坊门外侧', door: 'workshop', image: workshopImage },
+  { id: 'room', layer: 'manor', number: 3, label: '魔女的房间', feature: '阁楼书桌', image: roomImage },
+  { id: 'manorDoor', layer: 'outside', number: 0, label: '宅邸门外侧', door: 'gate', image: courtyardImage },
+  { id: 'mine', layer: 'outside', number: 1, label: '矿山', feature: '矿脉采集点', action: '采集土符文', rune: '土', image: mineImage },
+  { id: 'kiln', layer: 'outside', number: 2, label: '旧窑场', feature: '窑底余烬', action: '拾取火符文', rune: '火', image: workshopImage },
+  { id: 'workshop', layer: 'interior', number: 0, label: '工坊门内侧', door: 'workshopDoor', feature: '魔力锻炉', image: workshopImage },
+  ...Object.keys(plots).map((id, i) => ({
+    id, layer: 'interior', number: i + 1, image: workshopImage,
+    get label() {
+      return { warehouse: '仓库', furnace: '基础魔力炉' }[plots[id]?.type] ?? '空地'
+    },
+    get feature() { return '工坊 ' + (i + 1) + ' 号位' },
+  })),
 ]
-
-export const manor = { id: 'manor', label: '魔女宅邸', entrance: 'gate' }
-
-// Each road owns two stable, local exit numbers; layout changes do not renumber them.
-const roads = [
-  ['room', 1, 'courtyard', 2], ['room', 2, 'gate', 3], ['courtyard', 3, 'gate', 4],
-  ['room', 3, 'workshop', 3], ['courtyard', 1, 'workshop', 2], ['gate', 2, 'workshop', 1],
-  ['manor', 1, 'mine', 1], ['mine', 2, 'kiln', 1],
-]
-
-export const paths = roads.map(([a, , b]) => [a, b])
-export const placeById = Object.fromEntries(places.map(place => [place.id, place]))
-export const exits = Object.fromEntries(places.map(place => [place.id, {}]))
-for (const [a, portA, b, portB] of roads) {
-  exits[arrival(a)][portA] = arrival(b)
-  exits[arrival(b)][portB] = arrival(a)
-}
-
-export function arrival(id) {
-  return id === manor.id ? manor.entrance : id
-}
+export const placeById = Object.fromEntries(places.map(p => [p.id, p]))
+export const layerPlaces = Object.fromEntries(Object.keys(layers)
+  .map(layer => [layer, places.filter(p => p.layer === layer)]))
+export const addresses = Object.fromEntries(Object.entries(layerPlaces)
+  .map(([layer, nodes]) => [layer, Object.fromEntries(nodes.map(p => [p.number, p.id]))]))
 
 export function canTravel(from, to) {
-  return (to !== 'kiln' || ropewayOpen.value) && Object.values(exits[from]).includes(arrival(to))
+  return Boolean(placeById[from]) && placeById[from].layer === placeById[to]?.layer && (to !== 'kiln' || ropewayOpen.value)
 }

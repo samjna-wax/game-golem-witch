@@ -5,14 +5,16 @@ import {
   ropeway, ropewayOpen, troughGoal, fillTrough,
 } from './resources.js'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { places, arrival, canTravel } from './map.js'
+import { placeById, canTravel } from './map.js'
 import NearbyMap from './NearbyMap.vue'
 
+import { plots, tickFurnaces } from './buildings.js'
+import WorkshopPlot from './WorkshopPlot.vue'
 import ManaMeter from './ManaMeter.vue'
 import RuneBoard from './RuneBoard.vue'
 import { fleet, step } from './golems.js'
 
-const props = defineProps({ openEditor: Boolean })
+const props = defineProps({ openEditor: Boolean, workshopDemo: Boolean })
 const tab = ref(props.openEditor ? '哥雷姆' : '地图')
 function openTab(name) {
   tab.value = name
@@ -39,6 +41,7 @@ let clock
 onMounted(() => {
   clock = setInterval(() => {
     if (meditating.value) meditate()
+    tickFurnaces()
     // Rotate the first turn so that a low reserve is shared across the fleet.
     for (let i = 0; i < fleet.length; i++) {
       const g = fleet[(firstMachine + i) % fleet.length]
@@ -49,13 +52,17 @@ onMounted(() => {
 })
 onUnmounted(() => clearInterval(clock))
 
-const location = ref(props.openEditor ? 'workshop' : 'room')
-const current = computed(() => places.find(place => place.id === location.value))
+const location = ref(props.openEditor || props.workshopDemo ? 'workshop' : 'room')
+const current = computed(() => placeById[location.value])
 
 function travel(destination) {
   if (!canTravel(location.value, destination)) return
   meditating.value = false
-  location.value = arrival(destination)
+  location.value = destination
+}
+
+function crossDoor() {
+  if (current.value.door) location.value = current.value.door
 }
 
 function gather() {
@@ -92,19 +99,20 @@ function gather() {
     <div class="scene">
       <img :src="current.image" alt="">
       <div class="scene-caption">
-        <h1 id="room-title">{{ current.title }}</h1>
-        <p>{{ current.feature }}</p>
+        <h1 id="room-title">{{ current.label }}</h1>
+        <p>{{ current.feature || '交互点 0 · 穿门' }}</p>
       </div>
     </div>
-    <NearbyMap :location="location" @travel="travel" />
+    <NearbyMap :location="location" @travel="travel" @cross="crossDoor" />
     <div class="workbench">
       <div class="pack">
         <strong>随身背包 {{ bag.length }}/{{ bagCapacity }}</strong>
         <span>{{ bagContents || '空' }}</span>
-        <button v-if="location === 'workshop' && bag.length" class="gather"
+        <button v-if="plots[location]?.type === 'warehouse' && bag.length" class="gather"
           :disabled="!bag.some(rune => runeSpace(rune) > 0n)" @click="unloadBag">存入工坊</button>
-        <small v-if="location === 'workshop' && bag.some(rune => runeSpace(rune) === 0n)">满仓的符文会留在背包中。</small>
+        <small v-if="plots[location]?.type === 'warehouse' && bag.some(rune => runeSpace(rune) === 0n)">满仓的符文会留在背包中。</small>
       </div>
+      <WorkshopPlot v-if="current.layer === 'interior' && current.number > 0" :key="location" :id="location" />
       <section v-if="location === 'workshop'" class="forge" aria-label="魔力锻炉">
         <div class="recipe">
           <p id="forge-cost">每具消耗：魔力 {{ golemCost.mana }} · 土符文 {{ golemCost.earth }} · 水符文 {{ golemCost.water }}</p>
@@ -124,7 +132,7 @@ function gather() {
         <span>{{ current.action }}</span>
         <span class="yield">{{ bag.length >= bagCapacity ? '背包已满' : '+1' }}</span>
       </button>
-      <small v-if="current.rune && bag.length">带回工坊可将随身符文存入库存。</small>
+      <small v-if="current.rune && bag.length">带回工坊仓库可将随身符文存入库存。</small>
       <section v-if="location === 'mine'" class="station trough">
         <div class="board-head"><h2>索道水槽</h2><output>{{ ropeway.water }} / {{ troughGoal }}</output></div>
         <progress aria-label="水槽进度" :value="ropeway.water" :max="troughGoal"></progress>

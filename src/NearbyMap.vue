@@ -1,66 +1,42 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { manor, places, paths, arrival, canTravel, exits } from './map.js'
-
-import { ropewayOpen } from './resources.js'
-import ExitGuide from './ExitGuide.vue'
+import { computed } from 'vue'
+import { layers, layerPlaces, placeById, canTravel } from './map.js'
+import { buildingCount, buildingLimit } from './buildings.js'
 import { fleet } from './golems.js'
+import ExitGuide from './ExitGuide.vue'
 
-const props = defineProps({ location: { type: String, required: true } })
-defineEmits(['travel'])
-const expanded = ref(true)
-const inside = computed(() => places.find(place => place.id === props.location)?.parent === manor.id)
-const outside = places.filter(place => !place.parent)
-const nodes = computed(() => expanded.value ? places : [manor, ...outside])
-
-// Drawing coordinates are percentages. Travel always uses the graph's edges.
-const positions = computed(() => expanded.value
-  ? { room: [15, 25], courtyard: [15, 75], workshop: [50, 75], gate: [50, 25], mine: [85, 25], kiln: [85, 75] }
-  : { manor: [15, 50], mine: [50, 50], kiln: [85, 50] })
-const edges = computed(() => expanded.value
-  ? paths.map(([a, b]) => [arrival(a), arrival(b)])
-  : paths.filter(pair => pair.every(id => id === manor.id || outside.some(p => p.id === id))))
-
-function exitLabel(id) {
-  const port = Object.keys(exits[props.location]).find(n => exits[props.location][n] === arrival(id))
-  return port + ' 号' + (id === manor.id ? ' · 入口' : '出口')
-}
-function machinesHere(id) {
-  return fleet.filter(g => id === manor.id ? places.some(p => p.id === g.location && p.parent === manor.id) : g.location === id).length
-}
-
-function isHere(id) {
-  return id === manor.id ? inside.value : id === props.location
-}
-
-function reachable(id) {
-  return !isHere(id) && canTravel(props.location, id)
-}
+const props = defineProps({ location: String })
+defineEmits(['travel', 'cross'])
+const current = computed(() => placeById[props.location])
+const nodes = computed(() => layerPlaces[current.value.layer])
+const inWorkshop = computed(() => current.value.layer === 'interior')
+const positions = computed(() => nodes.value.length === 4
+  ? [[23, 25], [77, 75], [77, 25], [23, 75]] : [[17, 50], [50, 24], [83, 50]])
 </script>
 
 <template>
-  <nav class="map" aria-label="附近地图">
+  <nav class="map" aria-label="本层地图">
     <div class="map-heading">
-      <h2>附近地图</h2>
-      <button class="map-toggle" type="button" :aria-expanded="expanded" aria-controls="nearby-topology"
-        @click="expanded = !expanded">{{ expanded ? '收起宅邸' : '展开宅邸' }}</button>
+      <h2>{{ layers[current.layer] }}</h2>
+      <small v-if="inWorkshop">建筑 {{ buildingCount }} / {{ buildingLimit }}</small>
     </div>
-    <div id="nearby-topology" class="map-track" :class="{ expanded }">
-      <div v-if="expanded" class="manor-boundary"><span>魔女宅邸</span></div>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <line v-for="[a, b] in edges" :key="a + b" :class="{ closed: b === 'kiln' && !ropewayOpen }"
-          :x1="positions[a][0]" :y1="positions[a][1]"
-          :x2="positions[b][0]" :y2="positions[b][1]" />
+    <div :class="inWorkshop ? 'plot-list' : 'map-track expanded'">
+      <svg v-if="!inWorkshop" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <template v-for="([x, y], i) in positions" :key="i">
+          <line v-for="([x2, y2], j) in positions.slice(i+1)" :key="j" :x1="x" :y1="y" :x2="x2" :y2="y2"
+            :class="{ closed: !canTravel(location, nodes[i+j+1].id) }" />
+        </template>
       </svg>
-      <button v-for="node in nodes" :key="node.id" type="button" class="place"
-        :style="{ left: positions[node.id][0] + '%', top: positions[node.id][1] + '%' }"
-        :disabled="!reachable(node.id)" :aria-current="isHere(node.id) ? 'location' : undefined"
-        @click="$emit('travel', node.id)">
-        <strong>{{ node.label }}</strong>
-        <span v-if="machinesHere(node.id)" class="machine-marker" :aria-label="machinesHere(node.id) + ' 具哥雷姆'">⚙{{ machinesHere(node.id) }}</span>
-        <small>{{ isHere(node.id) ? '所在地' : node.id === 'kiln' && !ropewayOpen ? '索道停运' : reachable(node.id) ? exitLabel(node.id) : '未相邻' }}</small>
+      <button v-for="(node, i) in nodes" :key="node.id" :class="inWorkshop ? 'plot' : 'place'"
+        :style="inWorkshop ? undefined : { left: positions[i][0]+'%', top: positions[i][1]+'%' }"
+        :disabled="node.id === location || !canTravel(location, node.id)"
+        :aria-current="node.id === location ? 'location' : undefined" @click="$emit('travel', node.id)">
+        <strong>{{ node.number }} · {{ node.label }}</strong>
+        <small>{{ node.id === location ? '所在地' : !canTravel(location, node.id) ? '索道停运' : '水 ' + node.number }}</small>
+        <span v-if="fleet.some(g => g.location === node.id)" class="machine-marker">⚙{{ fleet.filter(g => g.location === node.id).length }}</span>
       </button>
     </div>
+    <button v-if="current.door" class="door-action" @click="$emit('cross')">穿门至{{ placeById[current.door].label }} · 土 0</button>
     <ExitGuide />
   </nav>
 </template>

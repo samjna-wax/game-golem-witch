@@ -59,20 +59,8 @@ h1 {
 .map { padding: 14px clamp(16px, 4vw, 48px) 16px; }
 .map-heading { display: flex; align-items: center; justify-content: space-between; }
 .map h2 { margin: 0; color: #ddc9b8; font-size: 15px; font-weight: 500; }
-.map-toggle {
-  padding: 0 8px; min-height: 44px; font-size: 14px; color: #ead5c2;
-  background: transparent; border: 0; text-decoration: underline; text-underline-offset: 4px;
-}
 .map-track { position: relative; height: 60px; max-width: 640px; margin: 0 auto; }
 .map-track.expanded { height: 144px; }
-.manor-boundary {
-  position: absolute; inset: 4px 32% 0 0; border: 1px dashed #847165;
-  border-radius: 6px; background: #322b30;
-}
-.manor-boundary span {
-  position: absolute; top: -9px; right: 6px; padding: 0 5px;
-  background: #282329; color: #decab8; font-size: 12px;
-}
 .map-track svg { position: absolute; width: 100%; height: 100%; pointer-events: none; }
 .map-track line { stroke: #bfab94; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .place {
@@ -267,3 +255,15 @@ html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
 .ledger { border-top: 1px solid #615459; padding-block: 12px; flex-wrap: wrap; }
 .recall { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .recall small { color: #e4cab2; }
+
+.map-heading { min-height: 42px; }
+.plot-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-block: 4px 10px; }
+.plot { position: relative; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 3px; padding: 7px 9px; background: #42373d; color: #f5e4d1; font-size: 15px; }
+.plot small { font-size: 12px; font-weight: 400; }
+.plot[aria-current] { border-color: #d2b180; background: #554437; }
+.door-action { margin-block: 6px; width: 100%; font-size: 16px; }
+.facility { width: 100%; }
+.facility h2 { font-size: 20px; margin: 0; }
+.facility p { color: #dfcfbf; }
+.facility select { min-height: 44px; font: inherit; }
+.facility details button { font-size: 15px; margin: 4px; }

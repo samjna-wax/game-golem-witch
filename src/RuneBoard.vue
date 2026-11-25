@@ -1,9 +1,10 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { resources, ropeway, ropewayOpen, troughGoal } from './resources.js'
-import { exits, placeById } from './map.js'
+import { layerPlaces, placeById } from './map.js'
 import { fleet, capacity, operand, step, recallCost, canRecall, recall } from './golems.js'
 
+import { plots } from './buildings.js'
 import ExitGuide from './ExitGuide.vue'
 import RuneEditor from './RuneEditor.vue'
 
@@ -11,6 +12,8 @@ const view = ref('edit')
 const iconMode = ref(true)
 const id = ref(1)
 const machine = computed(() => fleet[id.value - 1])
+const current = computed(() => placeById[machine.value.location])
+const building = computed(() => plots[machine.value.location])
 const selected = ref(null)
 function chooseMachine() {
   selected.value = null
@@ -46,12 +49,11 @@ function start() {
       @installed="showInstalled" @cleared="selected = null" />
     <template v-if="view === 'run'">
       <section class="readout" aria-label="哥雷姆状态">
-        <strong>{{ placeById[machine.location].title }}</strong>
+        <strong>{{ current.label }}</strong>
         <span>货舱 {{ machine.cargo.length }}/{{ capacity }} · {{ machine.cargo.join('、') || '空' }}</span>
-        <p>出口 <span v-for="(to, n) in exits[machine.location]" :key="n">{{ n }} {{ placeById[to].label }}{{ to === 'kiln' && !ropewayOpen ? '（停运）' : '' }}　</span></p>
-        <p v-if="machine.location === 'workshop' || placeById[machine.location].rune">
-          交互点 1 · {{ machine.location === 'workshop' ? '收货台' : placeById[machine.location].feature }}
-        </p>
+        <p>本层地点 <span v-for="p in layerPlaces[current.layer]" :key="p.id">{{ p.number }} {{ p.label }}{{ p.id === 'kiln' && !ropewayOpen ? '（停运）' : '' }}　</span></p>
+        <p v-if="current.door">交互点 0 · 穿门至{{ placeById[current.door].label }}</p>
+        <p v-if="current.rune || building">交互点 1 · {{ building?.type === 'warehouse' ? '卸货入库' : building?.type === 'furnace' ? '投入一枚火符文' : current.feature }}</p>
         <p v-if="machine.location === 'mine'">交互点 2 · 索道水槽 {{ ropeway.water }}/{{ troughGoal }}</p>
         <p>魔力 {{ resources.mana }} · 每步消耗 1</p>
         <p>库存 · 土 {{ resources.runes.土 }}　水 {{ resources.runes.水 }}</p>
@@ -68,7 +70,7 @@ function start() {
           <li v-for="(line, i) in machine.program" :key="i">
             <button :aria-pressed="i === selected" @click="selected = i">
               <span>{{ i + 1 }}</span><b class="rune-ink">{{ line }}</b>
-              <span>{{ line[0] === '水' ? '出口' : '交互点' }} {{ operand(line) }}</span>
+              <span>{{ line[0] === '水' ? '地点' : '交互点' }} {{ operand(line) }}</span>
               <small v-if="i === machine.pc">下一行</small>
             </button>
           </li>
