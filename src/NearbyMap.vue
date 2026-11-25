@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { manor, places, paths, arrival, canTravel, exits } from './map.js'
 
 import { ropewayOpen } from './resources.js'
+import ExitGuide from './ExitGuide.vue'
 import { fleet } from './golems.js'
 
 const props = defineProps({ location: { type: String, required: true } })
@@ -60,5 +61,6 @@ function reachable(id) {
         <small>{{ isHere(node.id) ? '所在地' : node.id === 'kiln' && !ropewayOpen ? '索道停运' : reachable(node.id) ? exitLabel(node.id) : '未相邻' }}</small>
       </button>
     </div>
+    <ExitGuide />
   </nav>
 </template>

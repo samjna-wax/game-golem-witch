@@ -1,9 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { digits, hauling, installation, installDraft, operand } from './golems.js'
 
 const props = defineProps({ machine: { type: Object, required: true } })
-const emit = defineEmits(['installed'])
+const emit = defineEmits(['installed', 'cleared'])
 const area = ref(null)
 const gutter = ref(null)
 const caret = ref(0)
@@ -16,6 +16,22 @@ const translated = computed(() => {
   if (!/^[水土][无水土气火]+$/u.test(line)) return '需要操作符和数值'
   return (line[0] === '水' ? '走出口 ' : '使用交互点 ') + operand(line)
 })
+
+// Native editing owns the text and selection while this machine is mounted.
+onMounted(() => { area.value.value = props.machine.draft })
+
+function clearProgram() {
+  props.machine.draft = ''
+  installDraft(props.machine)
+  const el = area.value
+  el.value = ''
+  el.setSelectionRange(0, 0)
+  el.scrollTop = 0
+  gutter.value.scrollTop = 0
+  caret.value = 0
+  el.focus({ preventScroll: true })
+  emit('cleared')
+}
 
 function syncSelection() {
   caret.value = area.value.selectionStart
@@ -49,13 +65,15 @@ function install() {
 <template>
   <section class="rune-editor" aria-label="符文草稿">
     <div class="board-head"><h2>程序草稿</h2>
+      <button v-if="machine.draft || machine.program.length" @click="clearProgram">清空并重写</button>
       <button v-if="!machine.draft" @mousedown.prevent @click="type(hauling.join('\n'))">填入运土范例</button>
     </div>
+    <p v-if="machine.program.length" class="hint">清空会停机并归还已装入的符文。</p>
     <div class="editor-paper">
       <div ref="gutter" class="gutter" aria-hidden="true">
         <span v-for="(_, i) in lines" :key="i">{{ i + 1 }}</span>
       </div>
-      <textarea ref="area" :value="machine.draft" class="rune-ink" aria-label="程序文本" inputmode="none" wrap="off"
+      <textarea ref="area" class="rune-ink" aria-label="程序文本" inputmode="none" wrap="off"
         spellcheck="false" autocapitalize="off" autocomplete="off" @input="nativeEdit"
         @select="syncSelection" @selectionchange="syncSelection" @click="syncSelection" @keyup="syncSelection"
         @scroll="gutter.scrollTop = area.scrollTop"></textarea>

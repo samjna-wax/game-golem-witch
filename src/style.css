@@ -250,3 +250,13 @@ button:focus-visible { outline: 3px solid #d4b3ff; outline-offset: 4px; }
 .trough progress { width: 100%; accent-color: #83b5c0; }
 .map-track line.closed { stroke-dasharray: 4 4; opacity: .6; }
 .discovery { color: #f6ca91; margin: 0; }
+
+.board-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
+.exit-guide { margin-block: 6px; border-block: 1px solid #68575c; }
+.exit-guide summary { padding-block: 12px; min-height: 44px; cursor: pointer; color: #ead5c2; }
+.exit-guide dl { margin: 0 0 8px; font-size: 15px; }
+.exit-guide dl > div { display: grid; grid-template-columns: 4em 1fr; gap: 8px; padding: 6px 0; }
+.exit-guide dt { color: #ddc9b8; }
+.exit-guide dd { display: flex; flex-wrap: wrap; gap: 3px 14px; margin: 0; }
+.exit-guide dd span { white-space: nowrap; }
+.exit-guide b { color: #f5cd92; font-variant-numeric: tabular-nums; }
