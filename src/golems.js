@@ -21,7 +21,7 @@ export function hauling() {
 export function newGolem() {
   fleet.push({
     id: fleet.length + 1, location: 'workshop', cargo: [], program: [], draft: '',
-    pc: 0, instructions: [], registers: emptyRegisters(), condition: false, running: false, report: '等待装入符文。',
+    pc: 0, instructions: [], registers: emptyRegisters(), currentRegister: '水', running: false, report: '等待装入符文。',
   })
 }
 
@@ -38,7 +38,7 @@ export function recall(golem) {
   golem.running = false
   golem.pc = 0
   golem.registers = emptyRegisters()
-  golem.condition = false
+  golem.currentRegister = '水'
   golem.report = '已回到工坊，货舱已清空。'
 }
 
@@ -89,7 +89,7 @@ export function installDraft(golem) {
   golem.instructions = plan.instructions
   golem.pc = 0
   golem.registers = emptyRegisters()
-  golem.condition = false
+  golem.currentRegister = '水'
   golem.report = plan.lines.length ? '新程序已装入，准备从首行执行。' : '程序已卸下，可收纳的符文已归还。'
   return true
 }
@@ -149,16 +149,17 @@ export function step(golem) {
   } else if (item.op === 'use') {
     outcome = interact(golem, n)
   } else if (item.op === 'inc') {
+    golem.currentRegister = item.register
     golem.registers[item.register]++
-  } else if (item.op === 'dec') {
-    golem.condition = golem.registers[item.register] > 0n
-    if (golem.condition) golem.registers[item.register]--
-    outcome.message += golem.condition ? '成功。' : '失败（值为零）。'
-  } else if (item.op === 'jump' || (item.op === 'branch' && golem.condition)) {
-    next = item.destination
-    outcome.message = '跳至标签 ' + item.target + '。'
-  } else if (item.op === 'branch') {
-    outcome.message = '条件为假，继续下一行。'
+  } else if (item.op === 'decBranch') {
+    const r = golem.currentRegister
+    if (golem.registers[r] > 0n) {
+      golem.registers[r]--
+      next = item.destination
+      outcome.message = r + '寄存器减一，跳至标签 ' + item.target + '。'
+    } else {
+      outcome.message = r + '寄存器为零，继续下一行。'
+    }
   }
   golem.report = '第 ' + (golem.pc + 1) + ' 行 · ' + (outcome.error ?? outcome.message)
   if (outcome.error) golem.running = false

@@ -8,21 +8,15 @@ function numberOf(runes) {
 }
 
 export function decode(line) {
-  const [op, mode, register] = line
+  const op = line[0]
   if (line.length < 2 || ![...line].every(r => digits.includes(r))) return { error: '需要操作符和符文参数。' }
-  if (op === '火') {
-    if (line.length !== 3 || !['水', '土'].includes(mode) || !registerNames.includes(register))
-      return { error: '火水或火土后接一个元素寄存器。' }
-    const increment = mode === '水'
-    return { op: increment ? 'inc' : 'dec', register, text: register + (increment ? '寄存器加一' : '寄存器尝试减一') }
-  }
-  if (op === '气') {
-    if (line.length < 3 || !['水', '无'].includes(mode)) return { error: '气水或气无后接标签编号。' }
-    const target = numberOf(line.slice(2))
-    const conditional = mode === '水'
-    return { op: conditional ? 'branch' : 'jump', target, text: (conditional ? '减一成功时跳至 ' : '跳至 ') + target }
-  }
   const value = numberOf(line.slice(1))
+  if (op === '火') {
+    if (value === 0n || value >= digits.length) return { error: '火的操作数须为寄存器编号 1 至 4（水、土、火、气）。' }
+    const register = digits[value]
+    return { op: 'inc', register, text: '选中' + register + '寄存器并加一' }
+  }
+  if (op === '气') return { op: 'decBranch', target: value, text: '当前寄存器减一，成功跳至 ' + value }
   if (op === '无') return { op: 'label', value, text: '标签 ' + value }
   return op === '水' ? { op: 'move', value, text: '前往本层地点 ' + value }
     : { op: 'use', value, text: '使用交互点 ' + value }

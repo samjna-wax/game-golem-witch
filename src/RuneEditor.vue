@@ -10,7 +10,7 @@ const emit = defineEmits(['installed', 'cleared'])
 const area = ref(null)
 const gutter = ref(null)
 const caret = ref(0)
-const counting = ['火水土', '无无', '火土土', '气水无', '气无水', '无水']
+const counting = ['火土', '火土', '无无', '气无', '火水']
 const plan = computed(() => installation(props.machine))
 const clearOverflow = computed(() => Object.entries(runeCost(props.machine.program))
   .filter(([rune, count]) => count > runeSpace(rune))
@@ -78,9 +78,9 @@ function install() {
     <p v-if="machine.program.length" class="hint">清空会停机并退还符文。<span v-if="clearOverflow">库存空间不足，{{ clearOverflow }} 将消散。</span></p>
     <details v-if="resources.airReturned" class="exit-guide">
       <summary>运算与跳转写法</summary>
-      <p>火水 R 给寄存器 R 加一；火土 R 尝试减一，成功时条件为真，原值为零时条件为假。R 可用水、土、火、气。</p>
-      <p>无 n 标记本行。气水 n 在最近一次减一成功时跳到标签 n；气无 n 总是跳转。编号按五进制书写。</p>
-      <p>例如「火水土」给土寄存器加一，「火土土」尝试减一，「气水无」在成功时跳到「无无」。</p>
+      <p>火 x 选中寄存器 x 并加一。水、土、火、气分别对应 1 至 4 号寄存器，初始选中水。</p>
+      <p>气 n 尝试给当前寄存器减一。成功就跳到标签 n；值为零就顺序执行下一行。无 n 标记本行为标签 n。</p>
+      <p>例如「火土」选中土并加一，「气无」尝试给当前寄存器减一，成功就跳到「无无」。</p>
     </details>
     <div class="editor-paper">
       <div ref="gutter" class="gutter" aria-hidden="true">

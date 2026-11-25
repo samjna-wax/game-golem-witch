@@ -56,7 +56,12 @@ function start() {
         <p v-if="current.rune || building">交互点 1 · {{ building?.type === 'warehouse' ? '卸货入库' : building?.type === 'furnace' ? '投入一枚火符文' : current.feature }}</p>
         <p v-if="machine.location === 'mine'">交互点 2 · 索道水槽 {{ ropeway.water }}/{{ troughGoal }}</p>
         <p>魔力 {{ resources.mana }} · 每步消耗 1</p>
-        <p v-if="resources.airReturned">寄存器 <span v-for="(value, name) in machine.registers" :key="name">{{ name }} {{ value }}　</span>减一条件 · {{ machine.condition ? '真' : '假' }}</p>
+        <div v-if="resources.airReturned" class="registers" aria-label="寄存器">
+          <strong>寄存器</strong>
+          <span v-for="(value, name) in machine.registers" :key="name" :aria-current="name === machine.currentRegister ? 'true' : undefined">
+            {{ name }} {{ value }}<small v-if="name === machine.currentRegister"> · 当前</small>
+          </span>
+        </div>
         <p>库存 · 土 {{ resources.runes.土 }}　水 {{ resources.runes.水 }}</p>
         <div class="recall">
           <button :disabled="!canRecall(machine)" @click="recall(machine); selected = null">一键回程</button>

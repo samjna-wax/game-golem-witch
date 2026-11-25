@@ -267,3 +267,7 @@ html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
 .facility p { color: #dfcfbf; }
 .facility select { min-height: 44px; font: inherit; }
 .facility details button { font-size: 15px; margin: 4px; }
+
+.registers { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-block: 8px; }
+.registers span { max-width: 100%; overflow-wrap: anywhere; border: 1px solid transparent; border-radius: 4px; padding: 2px 6px; }
+.registers [aria-current] { border-color: #c8a16f; background: #554437; color: #fff0ce; }
