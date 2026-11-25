@@ -2,13 +2,11 @@
 import { computed, ref } from 'vue'
 import { resources, ropeway, ropewayOpen, troughGoal } from './resources.js'
 import { exits, placeById } from './map.js'
-import { fleet, capacity, operand, step } from './golems.js'
+import { fleet, capacity, operand, step, recallCost, canRecall, recall } from './golems.js'
 
 import ExitGuide from './ExitGuide.vue'
 import RuneEditor from './RuneEditor.vue'
 
-defineProps({ returnLabel: String })
-defineEmits(['close'])
 const view = ref('edit')
 const iconMode = ref(true)
 const id = ref(1)
@@ -31,7 +29,7 @@ function start() {
   <article class="board" :class="{ 'icon-mode': iconMode }">
     <header class="board-head">
       <h1>符文板</h1>
-      <button type="button" @click="$emit('close')">{{ returnLabel }}</button>
+
     </header>
     <label>哥雷姆
       <select v-model="id" @change="chooseMachine">
@@ -57,6 +55,10 @@ function start() {
         <p v-if="machine.location === 'mine'">交互点 2 · 索道水槽 {{ ropeway.water }}/{{ troughGoal }}</p>
         <p>魔力 {{ resources.mana }} · 每步消耗 1</p>
         <p>库存 · 土 {{ resources.runes.土 }}　水 {{ resources.runes.水 }}</p>
+        <div class="recall">
+          <button :disabled="!canRecall(machine)" @click="recall(machine); selected = null">一键回程</button>
+          <small>消耗 {{ recallCost }} 魔力 · 丢弃货物并回工坊待命</small>
+        </div>
       </section>
 
       <div class="board-head"><h2>已装入程序</h2><span>{{ machine.running ? '运行中' : '已停止' }}</span></div>

@@ -6,6 +6,8 @@ export const resources = reactive({
   money: 0n,
 })
 
+export const manaCapacity = 200n
+export const runeCapacity = 100n
 export const manaPerSecond = 10n
 export const bagCapacity = 10
 export const bag = reactive([])
@@ -13,8 +15,22 @@ export const troughGoal = 150
 export const ropeway = reactive({ water: 0, fireFound: false })
 export const ropewayOpen = computed(() => ropeway.water === troughGoal)
 
+export function meditate() {
+  const space = manaCapacity - resources.mana
+  resources.mana += space < manaPerSecond ? space : manaPerSecond
+}
+
+export function runeSpace(rune) {
+  return runeCapacity - (resources.runes[rune] ?? 0n)
+}
+
 export function unloadBag() {
-  for (const rune of bag.splice(0)) resources.runes[rune]++
+  const remaining = []
+  for (const rune of bag) {
+    if (runeSpace(rune) > 0n) resources.runes[rune]++
+    else remaining.push(rune)
+  }
+  bag.splice(0, bag.length, ...remaining)
 }
 
 export function fillTrough(cargo, limit) {

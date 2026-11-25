@@ -1,18 +1,23 @@
 <script setup>
 import { canForge, forgeGolem, golemCost, golems } from './forge.js'
 import {
-  resources, manaPerSecond, bag, bagCapacity, unloadBag, collectRune,
+  resources, manaPerSecond, meditate, runeCapacity, runeSpace, bag, bagCapacity, unloadBag, collectRune,
   ropeway, ropewayOpen, troughGoal, fillTrough,
 } from './resources.js'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { places, arrival, canTravel } from './map.js'
 import NearbyMap from './NearbyMap.vue'
 
+import ManaMeter from './ManaMeter.vue'
 import RuneBoard from './RuneBoard.vue'
 import { fleet, step } from './golems.js'
 
 const props = defineProps({ openEditor: Boolean })
-const editing = ref(props.openEditor)
+const tab = ref(props.openEditor ? '哥雷姆' : '地图')
+function openTab(name) {
+  tab.value = name
+  window.scrollTo(0, 0)
+}
 const meditating = ref(false)
 const bagContents = computed(() => Object.keys(resources.runes)
   .map(rune => [rune, bag.filter(item => item === rune).length])
@@ -33,7 +38,7 @@ let firstMachine = 0
 let clock
 onMounted(() => {
   clock = setInterval(() => {
-    if (meditating.value) resources.mana += manaPerSecond
+    if (meditating.value) meditate()
     // Rotate the first turn so that a low reserve is shared across the fleet.
     for (let i = 0; i < fleet.length; i++) {
       const g = fleet[(firstMachine + i) % fleet.length]
@@ -60,8 +65,30 @@ function gather() {
 </script>
 
 <template>
-  <main v-if="editing" class="room"><RuneBoard :return-label="location === 'workshop' ? '返回工坊' : '返回房间'" @close="editing = false" /></main>
-  <main v-else class="room" aria-labelledby="room-title">
+  <nav class="top-nav" aria-label="游戏导航">
+    <button v-for="name in ['资源', '地图', '哥雷姆']" :key="name"
+      :aria-current="tab === name ? 'page' : undefined" @click="openTab(name)">{{ name }}</button>
+  </nav>
+  <main v-show="tab === '资源'" class="room stores" aria-label="资源">
+    <h1>资源</h1>
+    <ManaMeter />
+    <section class="stock" aria-label="工坊库存">
+      <h2>工坊库存</h2>
+      <dl>
+        <div v-for="(count, rune) in resources.runes" :key="rune">
+          <dt>{{ rune }}符文</dt>
+          <dd>{{ count }} <small>/ {{ runeCapacity }}</small></dd>
+        </div>
+      </dl>
+    </section>
+    <div class="ledger"><span>随身背包 {{ bag.length }}/{{ bagCapacity }}</span><strong>{{ bagContents || '空' }}</strong></div>
+    <div class="ledger"><span>金钱</span><strong>{{ resources.money }}</strong></div>
+  </main>
+  <main v-show="tab === '哥雷姆'" class="room" aria-label="哥雷姆">
+    <RuneBoard v-if="golems" />
+    <section v-else class="board"><h1>哥雷姆</h1><p>前往工坊，用 {{ golemCost.earth }} 土、{{ golemCost.water }} 水和 {{ golemCost.mana }} 魔力锻造第一具哥雷姆。</p></section>
+  </main>
+  <main v-show="tab === '地图'" class="room" aria-labelledby="room-title">
     <div class="scene">
       <img :src="current.image" alt="">
       <div class="scene-caption">
@@ -71,29 +98,12 @@ function gather() {
     </div>
     <NearbyMap :location="location" @travel="travel" />
     <div class="workbench">
-      <section class="resources" aria-label="全局资源">
-        <div class="balance">
-          <span id="mana-label">魔力</span>
-          <output aria-labelledby="mana-label">{{ resources.mana }}</output>
-        </div>
-        <div class="runes" role="group" aria-labelledby="rune-label">
-          <span id="rune-label">工坊库存</span>
-          <dl>
-            <div v-for="(count, element) in resources.runes" :key="element">
-              <dt>{{ element }}</dt>
-              <dd>{{ count }}</dd>
-            </div>
-          </dl>
-        </div>
-        <div class="balance">
-          <span id="money-label">金钱</span>
-          <output aria-labelledby="money-label">{{ resources.money }}</output>
-        </div>
-      </section>
       <div class="pack">
         <strong>随身背包 {{ bag.length }}/{{ bagCapacity }}</strong>
         <span>{{ bagContents || '空' }}</span>
-        <button v-if="location === 'workshop' && bag.length" @click="unloadBag">全部存入工坊</button>
+        <button v-if="location === 'workshop' && bag.length" class="gather"
+          :disabled="!bag.some(rune => runeSpace(rune) > 0n)" @click="unloadBag">存入工坊</button>
+        <small v-if="location === 'workshop' && bag.some(rune => runeSpace(rune) === 0n)">满仓的符文会留在背包中。</small>
       </div>
       <section v-if="location === 'workshop'" class="forge" aria-label="魔力锻炉">
         <div class="recipe">
@@ -107,9 +117,9 @@ function gather() {
       </section>
       <div v-if="location === 'room'" class="station">
         <button class="gather" @click="meditating = !meditating">{{ meditating ? '结束冥想' : '开始冥想' }}</button>
+        <ManaMeter />
         <small>每秒 +{{ manaPerSecond }} 魔力 · 离开房间结束冥想</small>
       </div>
-      <button v-if="golems && (location === 'workshop' || location === 'room')" @click="editing = true">打开符文板</button>
       <button v-if="current.action" :disabled="bag.length >= bagCapacity" type="button" class="gather" @click="gather">
         <span>{{ current.action }}</span>
         <span class="yield">{{ bag.length >= bagCapacity ? '背包已满' : '+1' }}</span>

@@ -1,8 +1,9 @@
 import { reactive } from 'vue'
 import { exits, placeById, canTravel } from './map.js'
-import { resources, ropewayOpen, fillTrough, collectRune } from './resources.js'
+import { resources, runeSpace, ropewayOpen, fillTrough, collectRune } from './resources.js'
 
 export const fleet = reactive([])
+export const recallCost = 10n
 export const capacity = 5
 export const digits = ['无', '水', '土', '气', '火']
 export const hauling = ['水水', '水水', '土水', '水水', '水土', '土水']
@@ -12,6 +13,21 @@ export function newGolem() {
     id: fleet.length + 1, location: 'workshop', cargo: [], program: [], draft: '',
     pc: 0, running: false, report: '等待装入符文。',
   })
+}
+
+export function canRecall(golem) {
+  return resources.mana >= recallCost &&
+    (golem.location !== 'workshop' || golem.cargo.length > 0 || golem.running || golem.pc !== 0)
+}
+
+export function recall(golem) {
+  if (!canRecall(golem)) return
+  resources.mana -= recallCost
+  golem.location = 'workshop'
+  golem.cargo.length = 0
+  golem.running = false
+  golem.pc = 0
+  golem.report = '已回到工坊，货舱已清空。'
 }
 
 export function operand(line) {
@@ -42,7 +58,8 @@ export function installation(golem) {
   for (const rune of digits) {
     const delta = (cost[rune] ?? 0n) - (old[rune] ?? 0n)
     if (!delta) continue
-    changes.push({ rune, delta })
+    const overflow = -delta > runeSpace(rune) ? -delta - runeSpace(rune) : 0n
+    changes.push({ rune, delta, overflow })
     const shortage = delta - (resources.runes[rune] ?? 0n)
     if (shortage > 0n) missing.push(rune + ' ' + shortage)
   }
@@ -53,11 +70,11 @@ export function installation(golem) {
 export function installDraft(golem) {
   const plan = installation(golem)
   if (plan.error || !plan.changed) return
-  for (const { rune, delta } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta
+  for (const { rune, delta, overflow } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta - overflow
   golem.running = false
   golem.program = plan.lines
   golem.pc = 0
-  golem.report = plan.lines.length ? '新程序已装入，准备从首行执行。' : '程序已卸下，符文已归还。'
+  golem.report = plan.lines.length ? '新程序已装入，准备从首行执行。' : '程序已卸下，可收纳的符文已归还。'
 }
 
 function interact(golem, slot) {
@@ -69,7 +86,9 @@ function interact(golem, slot) {
   if (slot !== 1n) return { error: '这里没有这个编号的交互点。' }
   if (golem.location === 'workshop') {
     if (!golem.cargo.length) return { error: '货舱已空，无法卸货。' }
-    const rune = golem.cargo.shift()
+    const rune = golem.cargo[0]
+    if (runeSpace(rune) === 0n) return { error: rune + '符文库存已满，货物留在舱内。' }
+    golem.cargo.shift()
     resources.runes[rune]++
     return { message: '已卸下 1 枚' + rune + '符文。' }
   }

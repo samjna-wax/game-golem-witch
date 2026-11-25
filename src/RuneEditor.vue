@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { digits, hauling, installation, installDraft, operand } from './golems.js'
+import { digits, hauling, installation, installDraft, operand, runeCost } from './golems.js'
+
+import { runeSpace } from './resources.js'
 
 const props = defineProps({ machine: { type: Object, required: true } })
 const emit = defineEmits(['installed', 'cleared'])
@@ -8,6 +10,9 @@ const area = ref(null)
 const gutter = ref(null)
 const caret = ref(0)
 const plan = computed(() => installation(props.machine))
+const clearOverflow = computed(() => Object.entries(runeCost(props.machine.program))
+  .filter(([rune, count]) => count > runeSpace(rune))
+  .map(([rune, count]) => rune + ' ' + (count - runeSpace(rune))).join('、'))
 const lines = computed(() => props.machine.draft.split('\n'))
 const current = computed(() => props.machine.draft.slice(0, caret.value).split('\n').length - 1)
 const translated = computed(() => {
@@ -68,7 +73,7 @@ function install() {
       <button v-if="machine.draft || machine.program.length" @click="clearProgram">清空并重写</button>
       <button v-if="!machine.draft" @mousedown.prevent @click="type(hauling.join('\n'))">填入运土范例</button>
     </div>
-    <p v-if="machine.program.length" class="hint">清空会停机并归还已装入的符文。</p>
+    <p v-if="machine.program.length" class="hint">清空会停机并退还符文。<span v-if="clearOverflow">库存空间不足，{{ clearOverflow }} 将消散。</span></p>
     <div class="editor-paper">
       <div ref="gutter" class="gutter" aria-hidden="true">
         <span v-for="(_, i) in lines" :key="i">{{ i + 1 }}</span>
@@ -91,7 +96,7 @@ function install() {
     </div>
     <p v-if="plan.error" class="message">{{ plan.error }}</p>
     <p v-else-if="plan.changes.length" class="hint">
-      <span v-for="{rune, delta} in plan.changes" :key="rune">{{ delta > 0n ? '占用' : '归还' }}{{ rune }} {{ delta > 0n ? delta : -delta }}　</span>
+      <span v-for="{rune, delta, overflow} in plan.changes" :key="rune">{{ delta > 0n ? '占用' : '归还' }}{{ rune }} {{ delta > 0n ? delta : -delta - overflow }}<template v-if="overflow">（另有 {{ overflow }} 枚溢出消散）</template>　</span>
     </p>
     <button :disabled="!!plan.error || !plan.changed" @click="install">装入哥雷姆</button>
   </section>
