@@ -27,4 +27,18 @@ if (workshopDemo) {
   resources.runes.火 = 25n
   resources.mana = 100n
 }
-createApp(App, { openEditor: editorDemo, workshopDemo }).mount('#app')
+const airDemo = import.meta.env.MODE === 'air-demo'
+if (airDemo) {
+  newGolem()
+  ropeway.water = 150
+  ropeway.fireFound = true
+  resources.runes.水 = 45n
+  resources.runes.土 = 35n
+  resources.runes.火 = 10n
+  resources.mana = 150n
+  fleet[0].draft = [
+    '土无', '水无', '土无', '水土', '土无', '水火', ...Array(3).fill('土水'),
+    '水无', '土无', '水无', '土无', '水土', '土无', '水水', ...Array(3).fill('土水'), '水无',
+  ].join('\n')
+}
+createApp(App, { openEditor: editorDemo || airDemo, workshopDemo }).mount('#app')

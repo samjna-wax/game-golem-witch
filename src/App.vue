@@ -88,6 +88,7 @@ function gather() {
         </div>
       </dl>
     </section>
+    <p v-if="resources.airReturned" class="discovery">首枚气符文已入库 · 已解锁运算与跳转</p>
     <div class="ledger"><span>随身背包 {{ bag.length }}/{{ bagCapacity }}</span><strong>{{ bagContents || '空' }}</strong></div>
     <div class="ledger"><span>金钱</span><strong>{{ resources.money }}</strong></div>
   </main>
@@ -142,7 +143,8 @@ function gather() {
           投入背包中的水<span v-if="troughPayment">× {{ troughPayment }}</span>
         </button>
       </section>
-      <p v-if="location === 'kiln' && ropeway.fireFound" class="discovery" role="status">已解锁火符文 · 旧窑场可持续采集</p>
+      <p v-if="location === 'kilnMouth'" class="hint">哥雷姆可用「水火」进入 3 号风井，「土水」采气，「水无」返回窑口。将气运回工坊仓库即可解锁新指令。</p>
+      <p v-if="(location === 'kiln' || location === 'kilnMouth') && ropeway.fireFound" class="discovery" role="status">已解锁火符文 · 旧窑场可持续采集</p>
     </div>
   </main>
 </template>

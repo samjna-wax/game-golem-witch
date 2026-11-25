@@ -4,10 +4,14 @@ import { resources, manaCapacity, runeSpace, ropewayOpen, fillTrough, collectRun
 
 import { plots, feedFurnace } from './buildings.js'
 
+import { digits, compile, registerNames } from './language.js'
+
 export const fleet = reactive([])
 export const recallCost = 10n
 export const capacity = 5
-export const digits = ['无', '水', '土', '气', '火']
+function emptyRegisters() {
+  return Object.fromEntries(registerNames.map(name => [name, 0n]))
+}
 export function hauling() {
   const warehouse = Object.keys(plots).find(id => plots[id]?.type === 'warehouse')
   const destination = digits[placeById[warehouse].number]
@@ -17,7 +21,7 @@ export function hauling() {
 export function newGolem() {
   fleet.push({
     id: fleet.length + 1, location: 'workshop', cargo: [], program: [], draft: '',
-    pc: 0, running: false, report: '等待装入符文。',
+    pc: 0, instructions: [], registers: emptyRegisters(), condition: false, running: false, report: '等待装入符文。',
   })
 }
 
@@ -33,13 +37,9 @@ export function recall(golem) {
   golem.cargo.length = 0
   golem.running = false
   golem.pc = 0
+  golem.registers = emptyRegisters()
+  golem.condition = false
   golem.report = '已回到工坊，货舱已清空。'
-}
-
-export function operand(line) {
-  let value = 0n
-  for (const rune of line.slice(1)) value = value * 5n + BigInt(digits.indexOf(rune))
-  return value
 }
 
 export function runeCost(lines) {
@@ -56,8 +56,8 @@ export function installation(golem) {
   const lines = golem.draft.split('\n')
   // A final newline is a line terminator. Interior empty lines need instructions.
   if (lines.at(-1) === '') lines.pop()
-  const invalid = lines.findIndex(line => !/^[水土][无水土气火]+$/u.test(line))
-  if (invalid !== -1) return { error: '第 ' + (invalid + 1) + ' 行需要水或土开头，并跟至少一枚数值符文。' }
+  const compiled = compile(lines, resources.airReturned)
+  if (compiled.error) return compiled
 
   const old = runeCost(golem.program)
   const cost = runeCost(lines)
@@ -76,7 +76,7 @@ export function installation(golem) {
   const manaCost = changed ? BigInt(length) : 0n
   if (manaCost > manaCapacity) missing.push('魔力容量 ' + (manaCost - manaCapacity) + '（上限 ' + manaCapacity + '）')
   else if (manaCost > resources.mana) missing.push('魔力 ' + (manaCost - resources.mana))
-  return { lines, changes, changed, length, manaCost, error: missing.length ? '还缺：' + missing.join('、') : '' }
+  return { lines, instructions: compiled.instructions, changes, changed, length, manaCost, error: missing.length ? '还缺：' + missing.join('、') : '' }
 }
 
 export function installDraft(golem) {
@@ -86,7 +86,10 @@ export function installDraft(golem) {
   for (const { rune, delta, overflow } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta - overflow
   golem.running = false
   golem.program = plan.lines
+  golem.instructions = plan.instructions
   golem.pc = 0
+  golem.registers = emptyRegisters()
+  golem.condition = false
   golem.report = plan.lines.length ? '新程序已装入，准备从首行执行。' : '程序已卸下，可收纳的符文已归还。'
   return true
 }
@@ -114,6 +117,10 @@ function interact(golem, slot) {
     if (runeSpace(rune) === 0n) return { error: rune + '符文库存已满，货物留在舱内。' }
     golem.cargo.shift()
     resources.runes[rune]++
+    if (rune === '气' && !resources.airReturned) {
+      resources.airReturned = true
+      return { message: '首枚气符文已入库，已解锁运算与跳转。' }
+    }
     return { message: '已卸下 1 枚' + rune + '符文。' }
   }
   const rune = placeById[golem.location].rune
@@ -124,25 +131,39 @@ function interact(golem, slot) {
 }
 
 export function step(golem) {
-  const line = golem.program[golem.pc]
-  if (!line) return
+  const item = golem.instructions[golem.pc]
+  if (!item) return
   if (resources.mana < 1n) {
     golem.report = '魔力不足，等候冥想供能。'
     return
   }
-  const n = operand(line)
-  let outcome
-  if (line[0] === '水') {
+  const n = item.value
+  let next = (golem.pc + 1) % golem.program.length
+  let outcome = { message: item.text }
+  if (item.op === 'move') {
     const to = addresses[placeById[golem.location].layer][n]
-    if (to && canTravel(golem.location, to)) {
+    if (to && canTravel(golem.location, to, 'golem')) {
       golem.location = to
       outcome = { message: '已抵达' + placeById[to].label + '。' }
     } else outcome = { error: to ? '索道尚未修复。' : '此处没有 ' + n + ' 号地点。' }
-  } else outcome = interact(golem, n)
+  } else if (item.op === 'use') {
+    outcome = interact(golem, n)
+  } else if (item.op === 'inc') {
+    golem.registers[item.register]++
+  } else if (item.op === 'dec') {
+    golem.condition = golem.registers[item.register] > 0n
+    if (golem.condition) golem.registers[item.register]--
+    outcome.message += golem.condition ? '成功。' : '失败（值为零）。'
+  } else if (item.op === 'jump' || (item.op === 'branch' && golem.condition)) {
+    next = item.destination
+    outcome.message = '跳至标签 ' + item.target + '。'
+  } else if (item.op === 'branch') {
+    outcome.message = '条件为假，继续下一行。'
+  }
   golem.report = '第 ' + (golem.pc + 1) + ' 行 · ' + (outcome.error ?? outcome.message)
   if (outcome.error) golem.running = false
   else {
     resources.mana--
-    golem.pc = (golem.pc + 1) % golem.program.length
+    golem.pc = next
   }
 }

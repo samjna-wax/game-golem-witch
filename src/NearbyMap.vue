@@ -10,7 +10,7 @@ defineEmits(['travel', 'cross'])
 const current = computed(() => placeById[props.location])
 const nodes = computed(() => layerPlaces[current.value.layer])
 const inWorkshop = computed(() => current.value.layer === 'interior')
-const positions = computed(() => nodes.value.length === 4
+const positions = computed(() => nodes.value.length === 2 ? [[23, 50], [77, 50]] : nodes.value.length === 4
   ? [[23, 25], [77, 75], [77, 25], [23, 75]] : [[17, 50], [50, 24], [83, 50]])
 </script>
 
@@ -32,7 +32,7 @@ const positions = computed(() => nodes.value.length === 4
         :disabled="node.id === location || !canTravel(location, node.id)"
         :aria-current="node.id === location ? 'location' : undefined" @click="$emit('travel', node.id)">
         <strong>{{ node.number }} · {{ node.label }}</strong>
-        <small>{{ node.id === location ? '所在地' : !canTravel(location, node.id) ? '索道停运' : '水 ' + node.number }}</small>
+        <small>{{ node.id === location ? '所在地' : node.golemOnly ? '仅哥雷姆通行' : !canTravel(location, node.id) ? '索道停运' : '水 ' + node.number }}</small>
         <span v-if="fleet.some(g => g.location === node.id)" class="machine-marker">⚙{{ fleet.filter(g => g.location === node.id).length }}</span>
       </button>
     </div>
