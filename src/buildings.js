@@ -8,7 +8,8 @@ export const buildingLimit = 4
 export const buildingCount = computed(() => Object.values(plots).filter(Boolean).length)
 export const furnaceCost = { 土: 50n, 火: 10n, 水: 10n }
 export const furnaceManaCost = 50n
-export const burnMana = 10n
+export const burnFuel = 2
+export const burnMana = 15n
 export const canBuild = computed(() => buildingCount.value < buildingLimit && resources.mana >= furnaceManaCost &&
   Object.entries(furnaceCost).every(([rune, cost]) => resources.runes[rune] >= cost))
 
@@ -39,9 +40,9 @@ export function feedFurnace(id, cargo) {
 
 export function tickFurnaces() {
   for (const building of Object.values(plots)) {
-    if (building?.type !== 'furnace' || !building.fuel) continue
+    if (building?.type !== 'furnace' || building.fuel < burnFuel) continue
     if (manaCapacity - resources.mana < burnMana) continue
-    building.fuel--
+    building.fuel -= burnFuel
     resources.mana += burnMana
   }
 }

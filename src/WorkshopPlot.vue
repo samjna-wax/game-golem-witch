@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { plots, buildingCount, buildingLimit, furnaceCost, canBuild, buildFurnace,
-  canMoveBuilding, moveBuilding, feedFurnace, furnaceManaCost, burnMana } from './buildings.js'
+  canMoveBuilding, moveBuilding, feedFurnace, furnaceManaCost, burnFuel, burnMana } from './buildings.js'
 import { bag, bagCapacity, resources, manaCapacity } from './resources.js'
 import { placeById } from './map.js'
 
@@ -26,8 +26,8 @@ function withdrawFire() {
     </template>
     <template v-else-if="building.type === 'furnace'">
       <h2>炉中燃料 · {{ building.fuel }} 火</h2>
-      <p>每秒消耗 1 火，产生 {{ burnMana }} 魔力。哥雷姆使用交互点 1 投料。</p>
-      <p>{{ !building.fuel ? '等待投料' : manaCapacity - resources.mana < burnMana ? '魔力储量接近上限，暂缓燃烧' : '正在燃烧' }} · 魔力 {{ resources.mana }}/{{ manaCapacity }}</p>
+      <p>每秒消耗 {{ burnFuel }} 火，产生 {{ burnMana }} 魔力。哥雷姆使用交互点 1 投料。</p>
+      <p>{{ building.fuel < burnFuel ? '还需 ' + (burnFuel - building.fuel) + ' 火开炉' : manaCapacity - resources.mana < burnMana ? '魔力储量接近上限，暂缓燃烧' : '正在燃烧' }} · 魔力 {{ resources.mana }}/{{ manaCapacity }}</p>
       <button class="gather" :disabled="!bag.includes('火')" @click="feedFurnace(id, bag)">从背包投入 1 火</button>
     </template>
     <template v-else-if="building.type === 'warehouse'">
