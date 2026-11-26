@@ -4,7 +4,7 @@ import { resources } from './resources.js'
 import { fleet, newGolem } from './golems.js'
 
 export const golems = computed(() => fleet.length)
-export const golemCost = { mana: 1n, earth: 10n, water: 5n }
+export const golemCost = { mana: 20n, earth: 10n, water: 5n }
 
 export const canForge = computed(() =>
   resources.mana >= golemCost.mana &&

@@ -7,9 +7,9 @@ export const resources = reactive({
   airReturned: false,
 })
 
-export const manaCapacity = 200n
+export const manaCapacity = 300n
 export const runeCapacity = 100n
-export const manaPerSecond = 10n
+export const manaPerSecond = 15n
 export const bagCapacity = 10
 export const bag = reactive([])
 export const troughGoal = 150

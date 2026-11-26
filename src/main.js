@@ -27,7 +27,7 @@ if (workshopDemo) {
   resources.runes.土 = 100n
   resources.runes.水 = 50n
   resources.runes.火 = 25n
-  resources.mana = 100n
+  resources.mana = 150n
 }
 const airDemo = import.meta.env.MODE === 'air-demo'
 if (airDemo) {
