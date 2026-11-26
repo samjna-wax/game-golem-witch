@@ -20,14 +20,13 @@ export function hauling() {
 
 export function newGolem() {
   fleet.push({
-    id: fleet.length + 1, location: 'interior', cargo: [], program: [], draft: '',
+    id: fleet.length + 1, initialized: true, location: 'interior', cargo: [], program: [], draft: '',
     pc: 0, instructions: [], registers: emptyRegisters(), currentRegister: '水', running: false, blocked: false, report: '等待装入符文。',
   })
 }
 
 export function canRecall(golem) {
-  return resources.mana >= recallCost &&
-    (golem.location !== 'interior' || golem.cargo.length > 0 || golem.running || golem.pc !== 0)
+  return !golem.initialized && resources.mana >= recallCost
 }
 
 export function recall(golem) {
@@ -40,7 +39,8 @@ export function recall(golem) {
   golem.pc = 0
   golem.registers = emptyRegisters()
   golem.currentRegister = '水'
-  golem.report = '已回到工坊，货舱已清空。'
+  golem.initialized = true
+  golem.report = '已回到工坊并重置，可以编辑符文。'
 }
 
 export function runeCost(lines) {
@@ -54,6 +54,7 @@ export function runeCost(lines) {
 }
 
 export function installation(golem) {
+  if (!golem.initialized) return { error: '请先重置哥雷姆再编辑符文。' }
   const lines = golem.draft.split('\n')
   // A final newline is a line terminator. Interior empty lines need instructions.
   if (lines.at(-1) === '') lines.pop()
@@ -87,6 +88,7 @@ export function installDraft(golem) {
   for (const { rune, delta, overflow } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta - overflow
   golem.running = false
   golem.blocked = false
+  golem.initialized = plan.lines.length === 0
   golem.program = plan.lines
   golem.instructions = plan.instructions
   golem.pc = 0
@@ -129,6 +131,7 @@ function interact(golem, slot) {
 export function step(golem) {
   const item = golem.instructions[golem.pc]
   if (!item) return
+  golem.initialized = false
   if (resources.mana < 1n) {
     golem.blocked = true
     golem.report = '魔力不足，等候供能。'

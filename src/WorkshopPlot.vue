@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { plots, buildingCount, buildingLimit, furnaceCost, canBuild, buildFurnace,
-  moveBuilding, feedFurnace, burnSeconds, burnMana } from './buildings.js'
+  canMoveBuilding, moveBuilding, feedFurnace, burnSeconds, burnMana } from './buildings.js'
 import { bag, bagCapacity, resources, manaCapacity } from './resources.js'
 import { placeById } from './map.js'
 
@@ -35,7 +35,7 @@ function withdrawFire() {
       <p>交互点 1 · 将哥雷姆的第一枚货物存入工坊库存。</p>
       <button class="gather" :disabled="bag.length >= bagCapacity || resources.runes.火 === 0n" @click="withdrawFire">取 1 火到背包</button>
     </template>
-    <details v-if="building" class="exit-guide">
+    <details v-if="canMoveBuilding(id)" class="exit-guide">
       <summary>移动建筑</summary>
       <label>空置位置
         <select v-model="destination">

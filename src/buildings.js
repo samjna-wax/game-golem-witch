@@ -18,8 +18,12 @@ export function buildFurnace(id) {
   plots[id] = { type: 'furnace', fuel: 0, elapsed: 0 }
 }
 
+export function canMoveBuilding(id) {
+  return Boolean(plots[id]) && plots[id].type !== 'forge'
+}
+
 export function moveBuilding(from, to) {
-  if (!plots[from] || plots[to] !== null) return
+  if (!canMoveBuilding(from) || plots[to] !== null) return
   plots[to] = plots[from]
   plots[from] = null
 }

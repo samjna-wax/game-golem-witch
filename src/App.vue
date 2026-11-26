@@ -110,7 +110,7 @@ function gather() {
           :disabled="!bag.some(rune => runeSpace(rune) > 0n)" @click="unloadBag">存入工坊</button>
         <small v-if="plots[location]?.type === 'warehouse' && bag.some(rune => runeSpace(rune) === 0n)">满仓的符文会留在背包中。</small>
       </div>
-      <WorkshopPlot v-if="current.layer === 'interior' && current.number > 0" :key="location" :id="location" />
+      <WorkshopPlot v-if="current.layer === 'interior' && current.number > 0 && plots[location]?.type !== 'forge'" :key="location" :id="location" />
       <section v-if="plots[location]?.type === 'forge'" class="forge" aria-label="魔力锻炉">
         <div class="recipe">
           <p id="forge-cost">每具消耗：魔力 {{ golemCost.mana }} · 土符文 {{ golemCost.earth }} · 水符文 {{ golemCost.water }}</p>

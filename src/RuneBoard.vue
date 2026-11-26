@@ -9,7 +9,7 @@ import ExitGuide from './ExitGuide.vue'
 import RuneEditor from './RuneEditor.vue'
 import { copyText, programText } from './copyProgram.js'
 
-const view = ref('edit')
+const view = ref(fleet[0].initialized ? 'edit' : 'run')
 const iconMode = ref(true)
 const id = ref(1)
 const machine = computed(() => fleet[id.value - 1])
@@ -42,9 +42,17 @@ function showInstalled() {
   clearCopyState()
   view.value = 'run'
 }
+function setNextLine() {
+  const g = machine.value
+  if (g.pc !== selected.value) {
+    g.initialized = false
+    g.pc = selected.value
+  }
+}
 function start() {
   const g = machine.value
   g.blocked = false
+  g.initialized = false
   g.running = true
 }
 </script>
@@ -66,7 +74,12 @@ function start() {
       <button :aria-pressed="view === 'run'" @click="view = 'run'">执行程序</button>
     </div>
     <ExitGuide />
-    <RuneEditor v-show="view === 'edit'" :key="machine.id" :machine="machine"
+    <div v-if="!machine.initialized" class="recall">
+      <button :disabled="!canRecall(machine)" @click="recall(machine); selected = null">重置并回程</button>
+      <small>编辑前须重置。消耗 {{ recallCost }} 魔力，清空货舱和寄存器，保留已装程序。</small>
+      <small v-if="!canRecall(machine)">当前魔力 {{ resources.mana }} / {{ recallCost }}</small>
+    </div>
+    <RuneEditor v-if="machine.initialized && view === 'edit'" :key="machine.id" :machine="machine"
       @installed="showInstalled" @cleared="chooseMachine" />
     <template v-if="view === 'run'">
       <section class="readout" aria-label="哥雷姆状态">
@@ -84,13 +97,10 @@ function start() {
           </span>
         </div>
         <p>库存 · 土 {{ resources.runes.土 }}　水 {{ resources.runes.水 }}</p>
-        <div class="recall">
-          <button :disabled="!canRecall(machine)" @click="recall(machine); selected = null">一键回程</button>
-          <small>消耗 {{ recallCost }} 魔力 · 丢弃货物并回工坊待命</small>
-        </div>
+
       </section>
 
-      <div class="board-head"><h2>已装入程序</h2><span>{{ machine.running ? (machine.blocked ? '等待中，将自动重试' : '运行中') : '已停止' }}</span></div>
+      <div class="board-head"><h2>已装入程序</h2><span>{{ machine.initialized ? '初始化 · 可编辑' : machine.running ? (machine.blocked ? '等待中，将自动重试' : '运行中') : '已停止' }}</span></div>
       <button :disabled="!machine.program.length" @click="copyProgram">复制完整程序</button>
       <p v-if="copyMessage" role="status" class="message">{{ copyMessage }}</p>
       <textarea v-if="manualCopy" :value="manualCopy" readonly aria-label="待复制的已装程序" @focus="$event.target.select()"></textarea>
@@ -111,7 +121,7 @@ function start() {
         <button :disabled="machine.running || !machine.program.length" @click="step(machine)">单步</button>
         <button v-if="machine.running" @click="machine.running = false">暂停</button>
         <button v-else :disabled="!machine.program.length" @click="start">自动循环</button>
-        <button v-if="selected !== null" :disabled="machine.running" @click="machine.pc = selected">从选中行开始</button>
+        <button v-if="selected !== null" :disabled="machine.running" @click="setNextLine">从选中行开始</button>
       </div>
     </template>
 
