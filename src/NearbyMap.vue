@@ -10,6 +10,7 @@ defineEmits(['travel'])
 const current = computed(() => placeById[props.location])
 const nodes = computed(() => layerPlaces[current.value.layer])
 const inWorkshop = computed(() => current.value.layer === 'interior')
+const atEntrance = computed(() => fleet.filter(g => g.location === current.value.layer).length)
 const exit = computed(() => travelTo(props.location, 0n))
 function access(node) {
   return travelTo(props.location, BigInt(node.number))
@@ -22,6 +23,7 @@ const positions = computed(() => nodes.value.length === 2 ? [[23, 50], [77, 50]]
   <nav class="map" aria-label="本层地图">
     <div class="map-heading">
       <h2>{{ layers[current.layer] }}</h2>
+      <small v-if="atEntrance">入口 · {{ atEntrance }} 具哥雷姆</small>
       <small v-if="inWorkshop">建筑 {{ buildingCount }} / {{ buildingLimit }}</small>
     </div>
     <div :class="inWorkshop ? 'plot-list' : 'map-track expanded'">
