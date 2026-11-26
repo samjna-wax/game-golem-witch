@@ -2,9 +2,9 @@ import { computed, reactive } from 'vue'
 import { resources, manaCapacity } from './resources.js'
 
 export const plots = reactive({
-  plot1: { type: 'warehouse' }, plot2: null, plot3: null, plot4: null,
+  plot1: { type: 'forge' }, plot2: { type: 'warehouse' }, plot3: null, plot4: null,
 })
-export const buildingLimit = 3
+export const buildingLimit = 4
 export const buildingCount = computed(() => Object.values(plots).filter(Boolean).length)
 export const furnaceCost = { 土: 50n, 火: 10n, 水: 10n }
 export const burnSeconds = 3

@@ -30,7 +30,7 @@ function withdrawFire() {
       <p>{{ !building.fuel ? '等待投料' : manaCapacity - resources.mana < burnMana ? '魔力储量接近上限，暂缓燃烧' : '正在燃烧 · ' + building.elapsed + ' / ' + burnSeconds + ' 秒' }} · 魔力 {{ resources.mana }}/{{ manaCapacity }}</p>
       <button class="gather" :disabled="!bag.includes('火')" @click="feedFurnace(id, bag)">从背包投入 1 火</button>
     </template>
-    <template v-else>
+    <template v-else-if="building.type === 'warehouse'">
       <h2>仓库收货台</h2>
       <p>交互点 1 · 将哥雷姆的第一枚货物存入工坊库存。</p>
       <button class="gather" :disabled="bag.length >= bagCapacity || resources.runes.火 === 0n" @click="withdrawFire">取 1 火到背包</button>

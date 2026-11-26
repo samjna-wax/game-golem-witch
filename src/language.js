@@ -18,6 +18,8 @@ export function decode(line) {
   }
   if (op === '气') return { op: 'decBranch', target: value, text: '当前寄存器减一，成功跳至 ' + value }
   if (op === '无') return { op: 'label', value, text: '标签 ' + value }
+  if (op === '土' && value === 0n) return { error: '交互点从 1 开始。退出当前地图请用水无。' }
+  if (op === '水' && value === 0n) return { op: 'move', value, text: '退出当前地图' }
   return op === '水' ? { op: 'move', value, text: '前往本层地点 ' + value }
     : { op: 'use', value, text: '使用交互点 ' + value }
 }

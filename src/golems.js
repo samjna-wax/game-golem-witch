@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { addresses, placeById, canTravel } from './map.js'
+import { placeById, locationPath, travelTo } from './map.js'
 import { resources, manaCapacity, runeSpace, ropewayOpen, fillTrough, collectRune } from './resources.js'
 
 import { plots, feedFurnace } from './buildings.js'
@@ -15,25 +15,25 @@ function emptyRegisters() {
 export function hauling() {
   const warehouse = Object.keys(plots).find(id => plots[id]?.type === 'warehouse')
   const destination = digits[placeById[warehouse].number]
-  return ['土无', '水无', '土无', '水水', '土水', '水无', '土无', '水土', '土无', '水' + destination, '土水', '水无']
+  return ['水无', '水无', '水土', '水水', '土水', '水无', '水水', '水土', '水' + destination, '土水']
 }
 
 export function newGolem() {
   fleet.push({
-    id: fleet.length + 1, location: 'workshop', cargo: [], program: [], draft: '',
+    id: fleet.length + 1, location: 'interior', cargo: [], program: [], draft: '',
     pc: 0, instructions: [], registers: emptyRegisters(), currentRegister: '水', running: false, blocked: false, report: '等待装入符文。',
   })
 }
 
 export function canRecall(golem) {
   return resources.mana >= recallCost &&
-    (golem.location !== 'workshop' || golem.cargo.length > 0 || golem.running || golem.pc !== 0)
+    (golem.location !== 'interior' || golem.cargo.length > 0 || golem.running || golem.pc !== 0)
 }
 
 export function recall(golem) {
   if (!canRecall(golem)) return
   resources.mana -= recallCost
-  golem.location = 'workshop'
+  golem.location = 'interior'
   golem.cargo.length = 0
   golem.running = false
   golem.blocked = false
@@ -97,12 +97,6 @@ export function installDraft(golem) {
 }
 
 function interact(golem, slot) {
-  if (slot === 0n) {
-    const otherSide = placeById[golem.location].door
-    if (!otherSide) return { error: '此处没有可穿过的门。' }
-    golem.location = otherSide
-    return { message: '已穿门至' + placeById[otherSide].label + '。' }
-  }
   if (golem.location === 'mine' && slot === 2n) {
     if (ropewayOpen.value) return { error: '索道已通，水槽已满。' }
     if (!fillTrough(golem.cargo, 1)) return { error: '货舱里没有水符文。' }
@@ -144,11 +138,12 @@ export function step(golem) {
   let next = (golem.pc + 1) % golem.program.length
   let outcome = { message: item.text }
   if (item.op === 'move') {
-    const to = addresses[placeById[golem.location].layer][n]
-    if (to && canTravel(golem.location, to, 'golem')) {
-      golem.location = to
-      outcome = { message: '已抵达' + placeById[to].label + '。' }
-    } else outcome = { error: to ? '索道尚未修复。' : '此处没有 ' + n + ' 号地点。' }
+    const move = travelTo(golem.location, n, 'golem')
+    if (move.error) outcome = move
+    else {
+      golem.location = move.location
+      outcome = { message: '已抵达' + locationPath(move.location) + '。' }
+    }
   } else if (item.op === 'use') {
     outcome = interact(golem, n)
   } else if (item.op === 'inc') {

@@ -5,7 +5,7 @@ import {
   ropeway, ropewayOpen, troughGoal, fillTrough,
 } from './resources.js'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { placeById, canTravel } from './map.js'
+import { placeById, locationPath, travelTo } from './map.js'
 import NearbyMap from './NearbyMap.vue'
 
 import { plots, tickFurnaces } from './buildings.js'
@@ -52,17 +52,14 @@ onMounted(() => {
 })
 onUnmounted(() => clearInterval(clock))
 
-const location = ref(props.openEditor || props.workshopDemo ? 'workshop' : 'room')
+const location = ref(props.openEditor || props.workshopDemo ? 'interior' : 'room')
 const current = computed(() => placeById[location.value])
 
-function travel(destination) {
-  if (!canTravel(location.value, destination)) return
+function travel(number) {
+  const move = travelTo(location.value, BigInt(number))
+  if (move.error) return
   meditating.value = false
-  location.value = destination
-}
-
-function crossDoor() {
-  if (current.value.door) location.value = current.value.door
+  location.value = move.location
 }
 
 function gather() {
@@ -100,11 +97,11 @@ function gather() {
     <div class="scene">
       <img :src="current.image" alt="">
       <div class="scene-caption">
-        <h1 id="room-title">{{ current.label }}</h1>
-        <p>{{ current.feature || '交互点 0 · 穿门' }}</p>
+        <h1 id="room-title">{{ locationPath(location) }}</h1>
+        <p v-if="current.feature">{{ current.feature }}</p>
       </div>
     </div>
-    <NearbyMap :location="location" @travel="travel" @cross="crossDoor" />
+    <NearbyMap :location="location" @travel="travel" />
     <div class="workbench">
       <div class="pack">
         <strong>随身背包 {{ bag.length }}/{{ bagCapacity }}</strong>
@@ -114,7 +111,7 @@ function gather() {
         <small v-if="plots[location]?.type === 'warehouse' && bag.some(rune => runeSpace(rune) === 0n)">满仓的符文会留在背包中。</small>
       </div>
       <WorkshopPlot v-if="current.layer === 'interior' && current.number > 0" :key="location" :id="location" />
-      <section v-if="location === 'workshop'" class="forge" aria-label="魔力锻炉">
+      <section v-if="plots[location]?.type === 'forge'" class="forge" aria-label="魔力锻炉">
         <div class="recipe">
           <p id="forge-cost">每具消耗：魔力 {{ golemCost.mana }} · 土符文 {{ golemCost.earth }} · 水符文 {{ golemCost.water }}</p>
           <output aria-label="已有哥雷姆">已有 {{ golems }} 具哥雷姆</output>
@@ -143,8 +140,8 @@ function gather() {
           投入背包中的水<span v-if="troughPayment">× {{ troughPayment }}</span>
         </button>
       </section>
-      <p v-if="location === 'kilnMouth'" class="hint">哥雷姆可用「水火」进入 3 号风井，「土水」采气，「水无」返回窑口。将气运回工坊仓库即可解锁新指令。</p>
-      <p v-if="(location === 'kiln' || location === 'kilnMouth') && ropeway.fireFound" class="discovery" role="status">已解锁火符文 · 旧窑场可持续采集</p>
+      <p v-if="current.layer === 'flue'" class="hint">哥雷姆可用「水火」进入 3 号风井，「土水」采气，「水无」退出旧窑场。将气运回工坊仓库即可解锁新指令。</p>
+      <p v-if="current.layer === 'flue' && ropeway.fireFound" class="discovery" role="status">已解锁火符文 · 旧窑场可持续采集</p>
     </div>
   </main>
 </template>
