@@ -7,6 +7,7 @@ import { fleet, capacity, step, recallCost, canRecall, recall } from './golems.j
 import { plots } from './buildings.js'
 import ExitGuide from './ExitGuide.vue'
 import RuneEditor from './RuneEditor.vue'
+import { copyText, programText } from './copyProgram.js'
 
 const view = ref('edit')
 const iconMode = ref(true)
@@ -15,11 +16,30 @@ const machine = computed(() => fleet[id.value - 1])
 const current = computed(() => placeById[machine.value.location])
 const building = computed(() => plots[machine.value.location])
 const selected = ref(null)
+const copyMessage = ref('')
+const manualCopy = ref('')
+let copyRequest = 0
+function clearCopyState() {
+  copyMessage.value = ''
+  manualCopy.value = ''
+  copyRequest++
+}
 function chooseMachine() {
   selected.value = null
+  clearCopyState()
+}
+async function copyProgram() {
+  const text = programText(machine.value)
+  const request = ++copyRequest
+  manualCopy.value = ''
+  const copied = await copyText(text)
+  if (request !== copyRequest) return
+  copyMessage.value = copied ? '已复制完整程序。' : '无法自动复制，请长按下方文本选择并复制。'
+  if (!copied) manualCopy.value = text
 }
 function showInstalled() {
   selected.value = null
+  clearCopyState()
   view.value = 'run'
 }
 function start() {
@@ -47,7 +67,7 @@ function start() {
     </div>
     <ExitGuide />
     <RuneEditor v-show="view === 'edit'" :key="machine.id" :machine="machine"
-      @installed="showInstalled" @cleared="selected = null" />
+      @installed="showInstalled" @cleared="chooseMachine" />
     <template v-if="view === 'run'">
       <section class="readout" aria-label="哥雷姆状态">
         <strong>{{ current.label }}</strong>
@@ -71,6 +91,9 @@ function start() {
       </section>
 
       <div class="board-head"><h2>已装入程序</h2><span>{{ machine.running ? (machine.blocked ? '等待中，将自动重试' : '运行中') : '已停止' }}</span></div>
+      <button :disabled="!machine.program.length" @click="copyProgram">复制完整程序</button>
+      <p v-if="copyMessage" role="status" class="message">{{ copyMessage }}</p>
+      <textarea v-if="manualCopy" :value="manualCopy" readonly aria-label="待复制的已装程序" @focus="$event.target.select()"></textarea>
       <details v-if="machine.program.length" class="installed">
         <summary>{{ machine.program.length }} 行 · 下一行 {{ machine.pc + 1 }}</summary>
         <ol class="program">
