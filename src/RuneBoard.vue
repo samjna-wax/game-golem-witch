@@ -24,6 +24,7 @@ function showInstalled() {
 }
 function start() {
   const g = machine.value
+  g.blocked = false
   g.running = true
 }
 </script>
@@ -69,7 +70,7 @@ function start() {
         </div>
       </section>
 
-      <div class="board-head"><h2>已装入程序</h2><span>{{ machine.running ? '运行中' : '已停止' }}</span></div>
+      <div class="board-head"><h2>已装入程序</h2><span>{{ machine.running ? (machine.blocked ? '等待中，将自动重试' : '运行中') : '已停止' }}</span></div>
       <details v-if="machine.program.length" class="installed">
         <summary>{{ machine.program.length }} 行 · 下一行 {{ machine.pc + 1 }}</summary>
         <ol class="program">

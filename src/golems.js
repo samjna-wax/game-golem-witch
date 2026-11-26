@@ -21,7 +21,7 @@ export function hauling() {
 export function newGolem() {
   fleet.push({
     id: fleet.length + 1, location: 'workshop', cargo: [], program: [], draft: '',
-    pc: 0, instructions: [], registers: emptyRegisters(), currentRegister: '水', running: false, report: '等待装入符文。',
+    pc: 0, instructions: [], registers: emptyRegisters(), currentRegister: '水', running: false, blocked: false, report: '等待装入符文。',
   })
 }
 
@@ -36,6 +36,7 @@ export function recall(golem) {
   golem.location = 'workshop'
   golem.cargo.length = 0
   golem.running = false
+  golem.blocked = false
   golem.pc = 0
   golem.registers = emptyRegisters()
   golem.currentRegister = '水'
@@ -85,6 +86,7 @@ export function installDraft(golem) {
   resources.mana -= plan.manaCost
   for (const { rune, delta, overflow } of plan.changes) resources.runes[rune] = (resources.runes[rune] ?? 0n) - delta - overflow
   golem.running = false
+  golem.blocked = false
   golem.program = plan.lines
   golem.instructions = plan.instructions
   golem.pc = 0
@@ -134,7 +136,8 @@ export function step(golem) {
   const item = golem.instructions[golem.pc]
   if (!item) return
   if (resources.mana < 1n) {
-    golem.report = '魔力不足，等候冥想供能。'
+    golem.blocked = true
+    golem.report = '魔力不足，等候供能。'
     return
   }
   const n = item.value
@@ -162,8 +165,8 @@ export function step(golem) {
     }
   }
   golem.report = '第 ' + (golem.pc + 1) + ' 行 · ' + (outcome.error ?? outcome.message)
-  if (outcome.error) golem.running = false
-  else {
+  golem.blocked = Boolean(outcome.error)
+  if (!outcome.error) {
     resources.mana--
     golem.pc = next
   }
